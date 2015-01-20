@@ -1,8 +1,21 @@
 package cop5555sp15;
 
+import static cop5555sp15.TokenStream.Kind.KW_BOOLEAN;
+import static cop5555sp15.TokenStream.Kind.KW_CLASS;
+import static cop5555sp15.TokenStream.Kind.KW_DEF;
+import static cop5555sp15.TokenStream.Kind.KW_ELSE;
+import static cop5555sp15.TokenStream.Kind.KW_IF;
+import static cop5555sp15.TokenStream.Kind.KW_IMPORT;
+import static cop5555sp15.TokenStream.Kind.KW_INT;
+import static cop5555sp15.TokenStream.Kind.KW_PRINT;
+import static cop5555sp15.TokenStream.Kind.KW_RETURN;
+import static cop5555sp15.TokenStream.Kind.KW_STRING;
+import static cop5555sp15.TokenStream.Kind.KW_WHILE;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * This class holds the tokenize input. It is initialized with the input
@@ -14,10 +27,27 @@ import java.util.ArrayList;
  *
  */
 public class TokenStream {
+	
+
 	char[] inputChars; // input
 	public final ArrayList<Token> tokens = new ArrayList<Token>(); // holds tokens after scan
-																	
-
+	
+	public final HashMap<String, Kind> keywords = new HashMap<String, Kind>();																
+	
+	public void initKeyword(){
+		this.keywords.put("int", KW_INT);
+		this.keywords.put("string", KW_STRING);
+		this.keywords.put("boolean", KW_BOOLEAN);
+		this.keywords.put("import", KW_IMPORT);
+		this.keywords.put("class", KW_CLASS);
+		this.keywords.put("def", KW_DEF);
+		this.keywords.put("while", KW_WHILE);
+		this.keywords.put("if", KW_IF);
+		this.keywords.put("else", KW_ELSE);
+		this.keywords.put("return", KW_RETURN);
+		this.keywords.put("print", KW_PRINT);
+	}
+	
 	/* provide input in char array */
 	public TokenStream(char[] inputChars) {
 		this.inputChars = inputChars;

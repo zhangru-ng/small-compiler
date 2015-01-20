@@ -5,7 +5,7 @@ import cop5555sp15.TokenStream.Token;
 import static cop5555sp15.TokenStream.Kind.*;
 
 public class Scanner {
-
+	
 	private enum State {
 		START, 
 		GOT_EQUALS, 
@@ -20,14 +20,15 @@ public class Scanner {
 		GOT_SLASH2STAR,
 		
 		IDENT_PART, 
-		DIGITS, 
+		INT_PART, 
+		STRING_PART,
 		EOF
 	}
 	//the current state of the DFA 
 	private State state;
 	
 	//the index of (next) char to process during scanning, or if none, past the end of the array
-	private int index; 
+	private int index ; 
 	
 	//the char to process during scanning
 	private char ch;
@@ -36,29 +37,38 @@ public class Scanner {
 	private int line;	
 	
     //local references to TokenStream objects for convenience
-    final TokenStream stream;  //set in constructor
-
+      //set in constructor
+	final TokenStream stream;
+    
 	public Scanner(TokenStream stream) {
 		//IMPLEMENT THIS
 		this.stream = stream;
 	}
 
+
 	
 	private char getch(){
-	//	index++;
-		return stream.inputChars[index++];
+		
+		//if(index < stream.inputChars.length){
+			return stream.inputChars[index++];
+		/*}else{
+			index++;
+			return 0;
+		}
+		*/
+		
 	}
 
 	// Fills in the stream.tokens list with recognized tokens 
      //from the input
 	public void scan() {
 		Token t = null;
-		ch = getch();
+		stream.initKeyword();
 		do{
 		//System.out.println("perform next()");
 			t = next();
 			stream.tokens.add(t);
-		//	System.out.println("beg:"+t.beg+"\t"+"end:"+t.end+"\t"+"kind:"+t.kind);
+			System.out.println("beg:"+t.beg+"\t"+"end:"+t.end+"\t"+"kind:"+t.kind);
 		}while(!t.kind.equals(EOF));	
 	}
 	
@@ -68,6 +78,7 @@ public class Scanner {
 		int begOffset = 0;		
 
 		do{
+			ch = getch();
 			switch(state){
 			case START:
 				begOffset = index;
@@ -141,14 +152,21 @@ public class Scanner {
 				case '@':
 					t= stream.new Token(AT, begOffset, index, line);
 					break;
+				case '"':
+					state = State.STRING_PART;
+					break;
 		/************************************************************/		
-				case 1://may be error
+				case 0://may be error
 					state = State.EOF;
 					break;
 		/************************************************************/	
 				default:
 					if(Character.isDigit(ch)){
-						state = State.DIGITS;
+						if(ch == '0'){
+							t= stream.new Token(INT_LIT, begOffset, index, line);
+						}else{
+							state = State.INT_PART;
+						}						
 					}else if(Character.isJavaIdentifierStart(ch)){
 						state = State.IDENT_PART;
 					}else if(Character.isWhitespace(ch)){
@@ -157,7 +175,7 @@ public class Scanner {
 						System.out.println("other character");
 					}
 				}
-				ch = getch();
+			//	ch = getch();
 				break;
 				
 			case GOT_DOT:
@@ -166,9 +184,9 @@ public class Scanner {
 					t= stream.new Token(RANGE, begOffset, index, line);
 					break;
 				default:
-					t= stream.new Token(DOT, begOffset, index--, line);
+					t= stream.new Token(DOT, begOffset, --index, line);
 				}
-				ch = getch();
+			//	ch = getch();
 				break;
 			case GOT_EQUALS:
 				switch(ch){
@@ -176,9 +194,9 @@ public class Scanner {
 					t= stream.new Token(EQUAL, begOffset, index, line);
 					break;
 				default:
-					t= stream.new Token(ASSIGN, begOffset, index--, line);
+					t= stream.new Token(ASSIGN, begOffset, --index, line);
 				}
-				ch = getch();
+			//	ch = getch();
 				break;
 			case GOT_LANGLE:
 				switch(ch){
@@ -189,9 +207,9 @@ public class Scanner {
 					t= stream.new Token(LSHIFT, begOffset, index, line);
 					break;
 				default:
-					t= stream.new Token(LT, begOffset, index--, line);
+					t= stream.new Token(LT, begOffset, --index, line);
 				}
-				ch = getch();
+			//	ch = getch();
 				break;
 			case GOT_RANGLE:
 				switch(ch){
@@ -202,9 +220,9 @@ public class Scanner {
 					t= stream.new Token(RSHIFT, begOffset, index, line);
 					break;
 				default:
-					t= stream.new Token(GT, begOffset, index--, line);
+					t= stream.new Token(GT, begOffset, --index, line);
 				}
-				ch = getch();
+			//	ch = getch();
 				break;
 			case GOT_HYPHEN:
 				switch(ch){
@@ -212,26 +230,35 @@ public class Scanner {
 					t= stream.new Token(ARROW, begOffset, index, line);
 					break;
 				default:
-					t= stream.new Token(MINUS, begOffset, index--, line);
+					t= stream.new Token(MINUS, begOffset, --index, line);
 				}
-				ch = getch();
+			//	ch = getch();
 				break;
-				
+			case GOT_EXCLAM:
+				switch(ch){
+				case '=':
+					t= stream.new Token(NOTEQUAL, begOffset, index, line);
+					break;
+				default:
+					t= stream.new Token(NOT, begOffset, --index, line);
+				}
+			//	ch = getch();
+				break;
 			case GOT_SLASH:
 				switch(ch){
 				case '*':
 					state = State.GOT_SLASHSTAR;
 					break;
 				default:
-					t= stream.new Token(DIV, begOffset, index--, line);						
+					t= stream.new Token(DIV, begOffset, --index, line);						
 				}
-				ch = getch();
+			//	ch = getch();
 				break;
 			case GOT_SLASHSTAR:
 				if(ch == '*'){
 					state = State.GOT_SLASH2STAR;
 				}
-				ch = getch();
+			//	ch = getch();
 				break;
 			case GOT_SLASH2STAR:
 				switch(ch){
@@ -243,27 +270,42 @@ public class Scanner {
 				default:
 					state = State.GOT_SLASHSTAR;
 				}
-				ch = getch();
+			//	ch = getch();
 				break;
 				
 			case IDENT_PART:
-				if(Character.isJavaIdentifierStart(ch)){
+				if(Character.isJavaIdentifierPart(ch) ){
 					state = State.IDENT_PART;
 				}else{
-					t= stream.new Token(IDENT, begOffset, --index, line);
-					
+					int len = index - begOffset;
+					char[] temp = new char[len];
+					for(int i=0; i<len; i++){
+						temp[i] = stream.inputChars[begOffset + i -1];
+					}
+					String s = String.valueOf(temp);
+					if(stream.keywords.containsKey(s)){
+						System.out.println(stream.keywords.get(s));					
+					}					
+					t= stream.new Token(IDENT, begOffset, --index, line);					
 				}
-				ch = getch();
+			//	ch = getch();
 				break;
-		/*	case DIGITS:
+			case INT_PART:
 				if(Character.isDigit(ch)){
-					state = State.DIGITS;
+					state = State.INT_PART;
 				}else{
-					t= stream.new Token(NUM_LIT, begOffset, --index,line);
-				}
-				ch = getch();
+					t= stream.new Token(INT_LIT, begOffset, --index,line);
+				}		
 				break;
-		*/
+			case STRING_PART:
+				switch(ch){
+				case '"':
+					t= stream.new Token(STRING_LIT, begOffset, index, line);
+					break;
+				default:
+					state = State.STRING_PART;					
+				}
+				break;
 			case EOF:
 				t= stream.new Token(EOF, begOffset, index, line);
 				break;
@@ -275,9 +317,10 @@ public class Scanner {
 	}	
 	
 	public static void main(String[] args){
-		TokenStream st = new TokenStream("asdhufidhf");
+		TokenStream st = new TokenStream("int string boolean print def class&.");
 		Scanner sc = new Scanner(st);
-		System.out.println(sc.stream.inputChars);
+		sc.scan();
+		//System.out.println(sc.stream.inputChars);
 	}
 
 }

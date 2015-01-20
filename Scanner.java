@@ -16,9 +16,10 @@ public class Scanner {
 		GOT_RANGLE,
 		GOT_HYPHEN,
 		
-		GOT_SLASH, 
-		GOT_SLASHSTAR,
-		GOT_SLASH2STAR,
+		GOT_SLASH, 				//got '/'
+		GOT_SLASHSTAR,			//got '/*'
+		GOT_SLASH2STAR,			//got '/*......*'
+		GOT_BSLASHR,			//got '\r'
 		
 		IDENT_PART, 
 		INT_PART, 
@@ -29,7 +30,7 @@ public class Scanner {
 	private State state;
 	
 	//the index of (next) char to process during scanning, or if none, past the end of the array
-	private int index = -1; 
+	private int index = 0; 
 	
 	//the char to process during scanning
 	private char ch;
@@ -72,10 +73,10 @@ public class Scanner {
 	
 	private char getch(){
 		
-		if(index < stream.inputChars.length - 1){
-			return stream.inputChars[++index];
+		if(index < stream.inputChars.length){
+			return stream.inputChars[index++];
 		}else{//deal with EOF
-			++index;
+			index++;
 			return (char)-1;
 		}
 		
@@ -90,11 +91,12 @@ public class Scanner {
 			t = next();
 			stream.tokens.add(t);
 			System.out.println("beg:"+t.beg+"\t"+"end:"+t.end+"\t"+"kind:"+t.kind+"\t"+"line:"+t.lineNumber);
-	/*		if(t.kind == INT_LIT){
-				System.out.println("content"+t.getIntVal());
+			if(t.kind == INT_LIT){
+				System.out.println("content:"+t.getIntVal());
 			}else if(t.kind == STRING_LIT){
-				System.out.println("content"+t.getText());
-			}*/
+				System.out.println("content:"+t.getText());
+			}
+		
 		}while(!t.kind.equals(EOF));	
 	}
 	
@@ -107,7 +109,7 @@ public class Scanner {
 			ch = getch();
 			switch(state){
 			case START:
-				begOffset = index;
+				begOffset = index - 1;
 				switch(ch){
 				case '.':
 					state = State.GOT_DOT;
@@ -185,6 +187,9 @@ public class Scanner {
 					//detect new line
 					line++;
 					break;	
+				case '\r':
+					state =State.GOT_BSLASHR;
+					break;
 				case (char) -1:
 					//detect end of file
 					state = State.EOF;
@@ -299,19 +304,26 @@ public class Scanner {
 				default:
 					state = State.GOT_SLASHSTAR;
 				}
-				break;				
+				break;
+			case GOT_BSLASHR:
+				if(ch != '\n'){
+					index--;
+				}
+				line++;
+				state = State.START;
+				break;
 			case IDENT_PART:
 				if(Character.isJavaIdentifierPart(ch)){
 					state = State.IDENT_PART;
 				}else{
-					int len = index - begOffset;
+					int len = index - begOffset -1;
 					char[] temp = new char[len];
 					for(int i=0; i<len; i++){
 						temp[i] = stream.inputChars[begOffset + i];
 					}
 					String s = String.valueOf(temp);
 					if(reservedWord.containsKey(s)){					
-						t= stream.new Token(reservedWord.get(s), begOffset, --index, line);					
+						t= stream.new Token(reservedWord.get(s), begOffset, --index, line);		
 					}else{
 						t= stream.new Token(IDENT, begOffset, --index, line);		
 					}		
@@ -331,7 +343,7 @@ public class Scanner {
 					t= stream.new Token(STRING_LIT, begOffset, index, line);
 					break;
 				case (char) -1:
-					t= stream.new Token(UNTERMINATED_STRING, begOffset, --index, line);				
+					t= stream.new Token(UNTERMINATED_STRING, begOffset, --index, line);	
 					break;					
 				default:
 					state = State.STRING_PART;					
@@ -339,7 +351,7 @@ public class Scanner {
 				break;
 			case EOF:
 				//take two iteration to end
-				t= stream.new Token(EOF, begOffset, --index, line);
+				t= stream.new Token(EOF, begOffset, index-2, line);
 				break;
 			default:
 				assert false:"should not reach here";
@@ -349,7 +361,7 @@ public class Scanner {
 	}	
 	
 	public static void main(String[] args){
-		TokenStream st = new TokenStream("0 1 2");
+		TokenStream st = new TokenStream("0");
 		Scanner sc = new Scanner(st);
 		sc.scan();
 	//	System.out.println(sc.stream.inputChars.length);

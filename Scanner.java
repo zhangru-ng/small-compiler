@@ -29,7 +29,7 @@ public class Scanner {
 	private State state;
 	
 	//the index of (next) char to process during scanning, or if none, past the end of the array
-	private int index ; 
+	private int index = -1; 
 	
 	//the char to process during scanning
 	private char ch;
@@ -72,11 +72,10 @@ public class Scanner {
 	
 	private char getch(){
 		
-		if(index < stream.inputChars.length){
-			return stream.inputChars[index++];
-		}else{
-			index++;
-			//deal with EOF
+		if(index < stream.inputChars.length - 1){
+			return stream.inputChars[++index];
+		}else{//deal with EOF
+			++index;
 			return (char)-1;
 		}
 		
@@ -91,6 +90,11 @@ public class Scanner {
 			t = next();
 			stream.tokens.add(t);
 			System.out.println("beg:"+t.beg+"\t"+"end:"+t.end+"\t"+"kind:"+t.kind+"\t"+"line:"+t.lineNumber);
+	/*		if(t.kind == INT_LIT){
+				System.out.println("content"+t.getIntVal());
+			}else if(t.kind == STRING_LIT){
+				System.out.println("content"+t.getText());
+			}*/
 		}while(!t.kind.equals(EOF));	
 	}
 	
@@ -303,14 +307,15 @@ public class Scanner {
 					int len = index - begOffset;
 					char[] temp = new char[len];
 					for(int i=0; i<len; i++){
-						temp[i] = stream.inputChars[begOffset + i -1];
+						temp[i] = stream.inputChars[begOffset + i];
 					}
 					String s = String.valueOf(temp);
 					if(reservedWord.containsKey(s)){					
 						t= stream.new Token(reservedWord.get(s), begOffset, --index, line);					
 					}else{
 						t= stream.new Token(IDENT, begOffset, --index, line);		
-					}						
+					}		
+					//t= stream.new Token(IDENT, begOffset, --index, line);	
 				}
 				break;
 			case INT_PART:
@@ -344,7 +349,7 @@ public class Scanner {
 	}	
 	
 	public static void main(String[] args){
-		TokenStream st = new TokenStream("yuan 123 true false  \n\"asd         /*ad     ");
+		TokenStream st = new TokenStream("0 1 2");
 		Scanner sc = new Scanner(st);
 		sc.scan();
 	//	System.out.println(sc.stream.inputChars.length);

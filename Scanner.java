@@ -45,7 +45,7 @@ public class Scanner {
 	//the keywords hash map
 	final HashMap<String, Kind> reservedWord = new HashMap<String, Kind>();			
     
-	public void initKeyword(){
+	public void initReservedWord(){
 		this.reservedWord.put("int", Kind.KW_INT);
 		this.reservedWord.put("string", Kind.KW_STRING);
 		this.reservedWord.put("boolean", Kind.KW_BOOLEAN);
@@ -65,8 +65,8 @@ public class Scanner {
 	public Scanner(TokenStream stream) {
 		//initialize input stream
 		this.stream = stream;
-		//initialize keywords Hashmap
-		this.initKeyword();
+		//initialize reserved words Hashmap
+		this.initReservedWord();
 	}
 
 

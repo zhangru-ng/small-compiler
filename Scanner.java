@@ -34,7 +34,7 @@ public class Scanner {
 	private char ch;
 
 	//the current line number
-	private int line;	
+	private int line = 1;	
 	
     //local references to TokenStream objects for convenience
       //set in constructor
@@ -49,26 +49,25 @@ public class Scanner {
 	
 	private char getch(){
 		
-		//if(index < stream.inputChars.length){
+		if(index < stream.inputChars.length){
 			return stream.inputChars[index++];
-		/*}else{
+		}else{
 			index++;
-			return 0;
+			return (char)-1;
 		}
-		*/
+		
 		
 	}
 
 	// Fills in the stream.tokens list with recognized tokens 
      //from the input
 	public void scan() {
-		Token t = null;
-		stream.initKeyword();
+		Token t = null; 
 		do{
 		//System.out.println("perform next()");
 			t = next();
 			stream.tokens.add(t);
-			System.out.println("beg:"+t.beg+"\t"+"end:"+t.end+"\t"+"kind:"+t.kind);
+			System.out.println("beg:"+t.beg+"\t"+"end:"+t.end+"\t"+"kind:"+t.kind+"\t"+"line:"+t.lineNumber);
 		}while(!t.kind.equals(EOF));	
 	}
 	
@@ -155,11 +154,12 @@ public class Scanner {
 				case '"':
 					state = State.STRING_PART;
 					break;
-		/************************************************************/		
-				case 0://may be error
+				case '\n':
+					line++;
+					break;	
+				case (char) -1:
 					state = State.EOF;
 					break;
-		/************************************************************/	
 				default:
 					if(Character.isDigit(ch)){
 						if(ch == '0'){
@@ -183,6 +183,10 @@ public class Scanner {
 				case '.':
 					t= stream.new Token(RANGE, begOffset, index, line);
 					break;
+				/*case 0:
+					state = State.EOF;
+					t= stream.new Token(DOT, begOffset, index, line);
+					break;*/
 				default:
 					t= stream.new Token(DOT, begOffset, --index, line);
 				}
@@ -274,7 +278,7 @@ public class Scanner {
 				break;
 				
 			case IDENT_PART:
-				if(Character.isJavaIdentifierPart(ch) ){
+				if(Character.isJavaIdentifierPart(ch)){
 					state = State.IDENT_PART;
 				}else{
 					int len = index - begOffset;
@@ -283,10 +287,11 @@ public class Scanner {
 						temp[i] = stream.inputChars[begOffset + i -1];
 					}
 					String s = String.valueOf(temp);
-					if(stream.keywords.containsKey(s)){
-						System.out.println(stream.keywords.get(s));					
-					}					
-					t= stream.new Token(IDENT, begOffset, --index, line);					
+					if(stream.keywords.containsKey(s)){					
+						t= stream.new Token(stream.keywords.get(s), begOffset, --index, line);					
+					}else{
+						t= stream.new Token(IDENT, begOffset, --index, line);		
+					}						
 				}
 			//	ch = getch();
 				break;
@@ -307,7 +312,7 @@ public class Scanner {
 				}
 				break;
 			case EOF:
-				t= stream.new Token(EOF, begOffset, index, line);
+				t= stream.new Token(EOF, begOffset, --index, line);
 				break;
 			default:
 				assert false:"should not reach here";
@@ -317,7 +322,7 @@ public class Scanner {
 	}	
 	
 	public static void main(String[] args){
-		TokenStream st = new TokenStream("int string boolean print def class&.");
+		TokenStream st = new TokenStream("1\n2\n3\n4");
 		Scanner sc = new Scanner(st);
 		sc.scan();
 		//System.out.println(sc.stream.inputChars);

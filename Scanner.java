@@ -42,23 +42,23 @@ public class Scanner {
 	final TokenStream stream;
 
 	//the keywords hash map
-	final HashMap<String, Kind> resWords = new HashMap<String, Kind>();			
+	final HashMap<String, Kind> reservedWord = new HashMap<String, Kind>();			
     
 	public void initKeyword(){
-		this.resWords.put("int", Kind.KW_INT);
-		this.resWords.put("string", Kind.KW_STRING);
-		this.resWords.put("boolean", Kind.KW_BOOLEAN);
-		this.resWords.put("import", Kind.KW_IMPORT);
-		this.resWords.put("class", Kind.KW_CLASS);
-		this.resWords.put("def", Kind.KW_DEF);
-		this.resWords.put("while", Kind.KW_WHILE);
-		this.resWords.put("if", Kind.KW_IF);
-		this.resWords.put("else", Kind.KW_ELSE);
-		this.resWords.put("return", Kind.KW_RETURN);
-		this.resWords.put("print", Kind.KW_PRINT);
-		this.resWords.put("true", Kind.BL_TRUE);
-		this.resWords.put("false", Kind.BL_FALSE);
-		this.resWords.put("null", Kind.NL_NULL);
+		this.reservedWord.put("int", Kind.KW_INT);
+		this.reservedWord.put("string", Kind.KW_STRING);
+		this.reservedWord.put("boolean", Kind.KW_BOOLEAN);
+		this.reservedWord.put("import", Kind.KW_IMPORT);
+		this.reservedWord.put("class", Kind.KW_CLASS);
+		this.reservedWord.put("def", Kind.KW_DEF);
+		this.reservedWord.put("while", Kind.KW_WHILE);
+		this.reservedWord.put("if", Kind.KW_IF);
+		this.reservedWord.put("else", Kind.KW_ELSE);
+		this.reservedWord.put("return", Kind.KW_RETURN);
+		this.reservedWord.put("print", Kind.KW_PRINT);
+		this.reservedWord.put("true", Kind.BL_TRUE);
+		this.reservedWord.put("false", Kind.BL_FALSE);
+		this.reservedWord.put("null", Kind.NL_NULL);
 	}
 	
 	public Scanner(TokenStream stream) {
@@ -83,8 +83,7 @@ public class Scanner {
 		
 	}
 
-	// Fills in the stream.tokens list with recognized tokens 
-     //from the input
+	// Fills in the stream.tokens list with recognized tokens from the input
 	public void scan() {
 		Token t = null; 
 		do{
@@ -198,11 +197,11 @@ public class Scanner {
 					}else if(Character.isWhitespace(ch)){
 						state = State.START;
 					}else{
-						System.out.println("other character");
+						t= stream.new Token(ILLEGAL_CHAR, begOffset, index, line);
+					//	System.out.println("other character");
 					}
 				}
-				break;
-				
+				break;				
 			case GOT_DOT:
 				switch(ch){
 				case '.':
@@ -273,8 +272,14 @@ public class Scanner {
 				}
 				break;
 			case GOT_SLASHSTAR:
-				if(ch == '*'){
+				switch(ch){
+				case '*':
 					state = State.GOT_SLASH2STAR;
+					break;
+				case (char) -1:
+					t= stream.new Token(UNTERMINATED_COMMENT, begOffset, --index, line);				
+					break;
+				default:
 				}
 				break;
 			case GOT_SLASH2STAR:
@@ -284,11 +289,13 @@ public class Scanner {
 					break;
 				case '*':
 					break;
+				case (char) -1:
+					t= stream.new Token(UNTERMINATED_COMMENT, begOffset, --index, line);				
+					break;
 				default:
 					state = State.GOT_SLASHSTAR;
 				}
-				break;
-				
+				break;				
 			case IDENT_PART:
 				if(Character.isJavaIdentifierPart(ch)){
 					state = State.IDENT_PART;
@@ -299,8 +306,8 @@ public class Scanner {
 						temp[i] = stream.inputChars[begOffset + i -1];
 					}
 					String s = String.valueOf(temp);
-					if(resWords.containsKey(s)){					
-						t= stream.new Token(resWords.get(s), begOffset, --index, line);					
+					if(reservedWord.containsKey(s)){					
+						t= stream.new Token(reservedWord.get(s), begOffset, --index, line);					
 					}else{
 						t= stream.new Token(IDENT, begOffset, --index, line);		
 					}						
@@ -318,6 +325,9 @@ public class Scanner {
 				case '"':
 					t= stream.new Token(STRING_LIT, begOffset, index, line);
 					break;
+				case (char) -1:
+					t= stream.new Token(UNTERMINATED_STRING, begOffset, --index, line);				
+					break;					
 				default:
 					state = State.STRING_PART;					
 				}
@@ -334,10 +344,10 @@ public class Scanner {
 	}	
 	
 	public static void main(String[] args){
-		TokenStream st = new TokenStream("string sw = null");
+		TokenStream st = new TokenStream("yuan 123 true false  \n\"asd         /*ad     ");
 		Scanner sc = new Scanner(st);
 		sc.scan();
-		//System.out.println(sc.stream.inputChars);
+	//	System.out.println(sc.stream.inputChars.length);
 	}
 
 }

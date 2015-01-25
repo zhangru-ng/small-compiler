@@ -3,6 +3,9 @@ package cop5555sp15;
 import cop5555sp15.TokenStream.Kind;
 import cop5555sp15.TokenStream.Token;
 import static cop5555sp15.TokenStream.Kind.*;
+
+import java.io.FileNotFoundException;
+//import java.io.FileReader;
 import java.util.HashMap;
 
 public class Scanner {
@@ -62,6 +65,8 @@ public class Scanner {
 		this.reservedWord.put("null", Kind.NL_NULL);
 	}
 	
+
+	
 	public Scanner(TokenStream stream) {
 		//initialize input stream
 		this.stream = stream;
@@ -94,6 +99,8 @@ public class Scanner {
 			if(t.kind == INT_LIT){
 				System.out.println("content:"+t.getIntVal());
 			}else if(t.kind == STRING_LIT){
+				System.out.println("content:"+t.getText());
+			}else{
 				System.out.println("content:"+t.getText());
 			}
 		
@@ -360,8 +367,10 @@ public class Scanner {
 		return t;		
 	}	
 	
-	public static void main(String[] args){
-		TokenStream st = new TokenStream("0");
+	public static void main(String[] args) throws FileNotFoundException{
+		//char[] input = new char[200];
+	//	FileReader fr = new FileReader("test.txt");
+		TokenStream st = new TokenStream("0123 1020 5400 00031");
 		Scanner sc = new Scanner(st);
 		sc.scan();
 	//	System.out.println(sc.stream.inputChars.length);

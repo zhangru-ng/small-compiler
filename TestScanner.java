@@ -47,7 +47,7 @@ public class TestScanner {
 
 	@Test
 	public void errorToken() {
-		System.out.println("Test: noWhitespace");
+		System.out.println("Test: errorToken");
 		String input = "@#  *";
 		System.out.println(input);
 		TokenStream stream = new TokenStream(input);
@@ -204,7 +204,7 @@ public class TestScanner {
 
 	@Test
 	public void intLiterals() {
-		System.out.println("lessAndGreater");
+		System.out.println("intLiterals");
 		String input = "0 1 23 45+ 67<=9";
 		System.out.println(input);
 		TokenStream stream = new TokenStream(input);
@@ -391,8 +391,10 @@ public class TestScanner {
 		Scanner scanner = new Scanner(stream);
 		scanner.scan();
 		System.out.println(stream);
+		assertEquals(DIV, stream.nextToken().kind);
 	}
-
+	
+	
 	// Creates an array containing the kinds of the tokens in the token list
 	Kind[] makeKindArray(TokenStream stream) {
 		Kind[] kinds = new Kind[stream.tokens.size()];

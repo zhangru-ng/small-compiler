@@ -349,6 +349,13 @@ public class Scanner {
 				case '"':
 					t= stream.new Token(STRING_LIT, begOffset, index, line);
 					break;
+				case '\\':
+					if(getch() == '"' || getch() == 'n' || getch() == 'r'){
+						break;
+					}else{
+						index--;
+					}
+					break;
 				case (char) -1:
 					t= stream.new Token(UNTERMINATED_STRING, begOffset, --index, line);	
 					break;					

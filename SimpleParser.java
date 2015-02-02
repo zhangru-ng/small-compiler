@@ -7,7 +7,7 @@ import static cop5555sp15.TokenStream.Kind.*;
 public class SimpleParser {
 	
 	//the token which is parsed currently
-	Token t;
+	private Token t;
 	 
 	//local references to TokenStream objects for convenience
 	final TokenStream stream;
@@ -19,21 +19,22 @@ public class SimpleParser {
 		consume();
 	}
 	
-	void consume() 
+	public boolean parse() {
+		clasS();
+		return isKind(EOF);  
+	}
+
+	
+	private void consume() 
 	{
 		t = stream.nextToken();
 	}
 
-	public boolean parse() {
-	//	classKey();
-		return isKind(EOF);  
-	}
-
-	boolean isKind(Kind kind) {
+	private boolean isKind(Kind kind) {
 		return kind == t.kind;
 	}
 
-	void match(Kind kind) {
+	private void match(Kind kind) {
 		if (isKind(kind)) {
 			consume();
 		} else{
@@ -41,18 +42,18 @@ public class SimpleParser {
 		}			
 	}
 
-	void error(String msg) {
+	private void error(String msg) {
 		//deal with error
 		System.out.println(msg);
 	}
 	
-	void clasS(){
+	private void clasS(){
 		match(KW_CLASS);
 		match(IDENT);
 		block();
 	}
 	
-	void block(){
+	private void block(){
 		while(isKind(KW_INT) || isKind(KW_BOOLEAN) || isKind(KW_STRING) || isKind(IDENT) || isKind(KW_PRINT) || 
 			  isKind(KW_WHILE) || isKind(KW_IF) || isKind(KW_RETURN) || isKind(KW_DEF)){
 			if(isKind(KW_INT) || isKind(KW_BOOLEAN) || isKind(KW_STRING)){
@@ -64,12 +65,12 @@ public class SimpleParser {
 		}
 	}
 	
-	void declaration(){
+	private void declaration(){
 		type();
 		match(IDENT);
 	}
 	
-	void type(){
+	private void type(){
 		switch(t.kind){
 		case KW_INT:
 			match(KW_INT);
@@ -85,7 +86,7 @@ public class SimpleParser {
 		}
 	}
 	
-	void command(){
+	private void command(){
 		switch(t.kind){
 		case IDENT:
 			lValue();
@@ -128,7 +129,7 @@ public class SimpleParser {
 		}
 	}
 	
-	void lValue(){
+	private void lValue(){
 		if(isKind(IDENT)){
 			match(IDENT);
 			if(isKind(LSQUARE)){
@@ -139,7 +140,7 @@ public class SimpleParser {
 		}
 	}
 	
-	void pairList(){
+	private void pairList(){
 		match(LCURLY);
 		if(isKind(LSQUARE)){
 			match(LSQUARE);
@@ -156,7 +157,7 @@ public class SimpleParser {
 		}
 	}
 	
-	void pair(){
+	private void pair(){
 		match(LSQUARE);
 		expression();
 		match(COMMA);
@@ -164,32 +165,32 @@ public class SimpleParser {
 		match(RSQUARE);
 	}
 	
-	void expression(){
+	private void expression(){
 		term();
 		while(isKind(BAR) || isKind(AND) || isKind(EQUAL) || isKind(NOTEQUAL) || isKind(LT) || 
 			  isKind(GT) || isKind(LE) || isKind(GE)){
-			consume();
+			relOp();
 			term();
 		}
 	}
 	
-	void term(){
+	private void term(){
 		element();
 		while(isKind(PLUS) || isKind(MINUS)){
-			consume();
+			weakOp();
 			element();
 		}
 	}
 	
-	void element(){
+	private void element(){
 		factor();
 		while(isKind(TIMES) || isKind(DIV)){
-			consume();
+			strongOp();
 			factor();
 		}
 	}
 
-	void factor(){
+	private void factor(){
 		switch(t.kind){
 		case IDENT:
 			lValue();
@@ -226,7 +227,7 @@ public class SimpleParser {
 		}
 	}
 	
-	void relOp(){
+	private void relOp(){
 		switch(t.kind){
 		case BAR:
 			match(BAR);
@@ -257,7 +258,7 @@ public class SimpleParser {
 		}
 	}
 	
-	void weakOp(){
+	private void weakOp(){
 		switch(t.kind){
 		case PLUS:
 			match(PLUS);
@@ -270,7 +271,7 @@ public class SimpleParser {
 		}
 	}
 	
-	void strongOp(){
+	private void strongOp(){
 		switch(t.kind){
 		case TIMES:
 			match(TIMES);

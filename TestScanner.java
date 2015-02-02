@@ -67,7 +67,7 @@ public class TestScanner {
 
 	@Test
 	public void errorToken() {
-		System.out.println("Test: noWhitespace");
+		System.out.println("Test: errorToken");
 		String input = "@#  *";
 		TokenStream stream = scanInput(input);
 		assertEquals(4, stream.tokens.size()); // one each for @,#, and *, plus
@@ -196,7 +196,7 @@ public class TestScanner {
 
 	@Test
 	public void intLiterals() {
-		System.out.println("lessAndGreater");
+		System.out.println("intLiterals");
 		String input = "0 1 23 45+ 67<=9";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { INT_LIT, INT_LIT, INT_LIT, INT_LIT, PLUS,
@@ -348,6 +348,7 @@ public class TestScanner {
 	
 	@Test
 	public void separators1(){
+	    System.out.println("separators1");
 		String input = ",()[]";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { COMMA, LPAREN, RPAREN, LSQUARE, RSQUARE, EOF };
@@ -358,6 +359,7 @@ public class TestScanner {
 	
 	@Test
 	public void separators2(){
+		System.out.println("separators2");
 		String input = "{}:?";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { LCURLY, RCURLY, COLON, QUESTION, EOF };
@@ -368,6 +370,7 @@ public class TestScanner {
 	
 	@Test
 	public void operators1(){
+		System.out.println("operators1");
 		String input = "|&<> ";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { BAR, AND, LT, GT, EOF };
@@ -378,6 +381,7 @@ public class TestScanner {
 	
 	@Test
 	public void operators2(){
+		System.out.println("operators2");
 		String input = ">= << >>";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { GE, LSHIFT, RSHIFT, EOF };
@@ -388,6 +392,7 @@ public class TestScanner {
 	
 	@Test
 	public void twoCharOperators1(){
+		System.out.println("twoCharOperators1");
 		String input = "<< < <<<";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { LSHIFT, LT, LSHIFT, LT, EOF };
@@ -398,6 +403,7 @@ public class TestScanner {
 	
 	@Test
 	public void twoCharOperators2(){
+		System.out.println("twoCharOperators2");
 		String input = ">>> > >>";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { RSHIFT, GT, GT, RSHIFT, EOF };
@@ -408,6 +414,7 @@ public class TestScanner {
 	
 	@Test
 	public void twoCharOperators3(){
+		System.out.println("twoCharOperators3");
 		String input = ">>>==== ";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { RSHIFT, GE, EQUAL, ASSIGN, EOF };
@@ -418,6 +425,7 @@ public class TestScanner {
 	
 	@Test
 	public void twoCharOperators4(){
+		System.out.println("twoCharOperators4");
 		String input = "<<<<=!=!=";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { LSHIFT, LSHIFT, ASSIGN, NOTEQUAL, NOTEQUAL, EOF };
@@ -428,6 +436,7 @@ public class TestScanner {
 	
 	@Test
 	public void twoCharSeparator1(){
+		System.out.println("twoCharSeparator1");
 		String input = ".......";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { RANGE, RANGE, RANGE, DOT, EOF };
@@ -438,6 +447,7 @@ public class TestScanner {
 	
 	@Test
 	public void almostKeywords1(){
+		System.out.println("almostKeywords1");
 		String input = "inta stringb booleanc importa classb defc ";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { IDENT, IDENT, IDENT, IDENT, IDENT, IDENT, EOF };
@@ -446,6 +456,7 @@ public class TestScanner {
 	
 	@Test
 	public void almostKeywords2(){
+		System.out.println("almostKeywords2");
 		String input = "whiled ifc elseg returnb printm";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { IDENT, IDENT, IDENT, IDENT, IDENT, EOF };
@@ -454,6 +465,7 @@ public class TestScanner {
 	
 	@Test
 	public void almostKeywords3(){
+		System.out.println("almostKeywords3");
 		String input = "true$ false_ nulll";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { IDENT, IDENT, IDENT, EOF };
@@ -462,6 +474,7 @@ public class TestScanner {
 
 	@Test
 	public void illegalChars(){
+		System.out.println("illegalChars");
 		String input = "# ^ ~ ` '";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { ILLEGAL_CHAR, ILLEGAL_CHAR, ILLEGAL_CHAR, ILLEGAL_CHAR, ILLEGAL_CHAR, EOF };
@@ -472,6 +485,7 @@ public class TestScanner {
 	
 	@Test
 	public void identsTest1(){
+		System.out.println("identsTest1");
 		String input = "$ $8 a$a $$$ aa$9";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { IDENT, IDENT, IDENT, IDENT, IDENT, EOF };
@@ -482,6 +496,7 @@ public class TestScanner {
 	
 	@Test
 	public void identsTest2(){
+		System.out.println("identsTest2");
 		String input = "_ _8 a_a ___ aa_9";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { IDENT, IDENT, IDENT, IDENT, IDENT, EOF };
@@ -492,6 +507,7 @@ public class TestScanner {
 	
 	@Test
 	public void commentsTest1(){
+		System.out.println("commentsTest1");
 		String input = "X /* \n\r\n\r\n\r */ X";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { IDENT, IDENT, EOF };
@@ -501,7 +517,8 @@ public class TestScanner {
 	}
 	
 	@Test
-	public void commentsTest2(){
+	public void commentsTest2(){	
+		System.out.println("commentsTest2");
 		String input = "X /* \n\r\n\r\n\r X";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { IDENT, UNTERMINATED_COMMENT, EOF };
@@ -510,6 +527,7 @@ public class TestScanner {
 	
 	@Test
 	public void commentsTest3(){
+		System.out.println("commentsTest3");
 		String input = "/* /* */ */";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { TIMES, DIV, EOF };
@@ -521,6 +539,7 @@ public class TestScanner {
 	
 	@Test
 	public void stringLiteralTest1(){
+		System.out.println("stringLiteralTest1");
 		String input = "\" a\n b \"";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { STRING_LIT, EOF };
@@ -531,6 +550,7 @@ public class TestScanner {
 	
 	@Test
 	public void stringLiteralTest2(){
+		System.out.println("stringLiteralTest2");
 		String input = "\" a\r\n b \"";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { STRING_LIT, EOF };
@@ -541,6 +561,7 @@ public class TestScanner {
 	
 	@Test
 	public void stringLiteralTest3(){
+		System.out.println("stringLiteralTest3");
 		String input = "\" a\\\" b \"";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { STRING_LIT, EOF };
@@ -551,6 +572,7 @@ public class TestScanner {
 	
 	@Test
 	public void stringLiteralTest4(){
+		System.out.println("stringLiteralTest4");
 		String input = "\" a\\\n b \"";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { STRING_LIT, EOF };
@@ -561,6 +583,7 @@ public class TestScanner {
 	
 	@Test
 	public void stringLiteralTest5(){
+		System.out.println("stringLiteralTest5");
 		String input = "\" a\\\r b \"";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { STRING_LIT, EOF };
@@ -571,6 +594,7 @@ public class TestScanner {
 	
 	@Test
 	public void intLiteralTest1(){
+		System.out.println("intLiteralTest1");
 		String input = "5 0 01 100 1251";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { INT_LIT, INT_LIT, INT_LIT, INT_LIT, INT_LIT, INT_LIT, EOF };

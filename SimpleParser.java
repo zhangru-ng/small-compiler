@@ -43,9 +43,12 @@ public class SimpleParser {
 			return sb.toString();
 		}
 	}
+	
+	//the token which is parsed currently
+	private Token t;	 
 
-	TokenStream tokens;
-	Token t;
+	//local references to TokenStream objects for convenience
+	final TokenStream tokens;	
 
 	SimpleParser(TokenStream tokens) {
 		this.tokens = tokens;
@@ -257,7 +260,7 @@ public class SimpleParser {
 	**/
 	private void Statement() throws SyntaxException{
 		switch(t.kind){
-		case IDENT://*************some problem
+		case IDENT:
 			LValue();
 			match(ASSIGN);
 			Expression();
@@ -266,7 +269,7 @@ public class SimpleParser {
 			match(KW_PRINT);
 			Expression();
 			break;
-		case KW_WHILE://*************some problem
+		case KW_WHILE:
 			match(KW_WHILE);
 			if(isKind(TIMES)){
 				match(TIMES);

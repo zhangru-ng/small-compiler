@@ -239,14 +239,14 @@ public class TestScanner {
 	@Test
 	public void keywords() {
 		System.out.println("keywords");
-		String input = " int  string  boolean import  class  def  while if  else  return  print aaa";
+		String input = " int  string  boolean import  class  def  while if  else  return  print size key value aaa";
 		TokenStream stream = scanInput(input);
 		Kind[] expectedKinds = { KW_INT, KW_STRING, KW_BOOLEAN, KW_IMPORT,
 				KW_CLASS, KW_DEF, KW_WHILE, KW_IF, KW_ELSE, KW_RETURN,
-				KW_PRINT, IDENT, EOF };
+				KW_PRINT, KW_SIZE, KW_KEY, KW_VALUE, IDENT, EOF };
 		String[] expectedTexts = { "int", "string", "boolean", "import",
 				"class", "def", "while", "if", "else", "return", "print",
-				"aaa", "" }; // need empty string for eof
+				"size", "key", "value", "aaa", "" }; // need empty string for eof
 		assertArrayEquals(expectedKinds, makeKindArray(stream));
 		assertArrayEquals(expectedTexts, makeTokenTextArray(stream));
 	}

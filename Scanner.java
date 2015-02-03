@@ -61,6 +61,9 @@ public class Scanner {
 		this.reservedWord.put("true", Kind.BL_TRUE);
 		this.reservedWord.put("false", Kind.BL_FALSE);
 		this.reservedWord.put("null", Kind.NL_NULL);
+		this.reservedWord.put("size", Kind.KW_SIZE);
+		this.reservedWord.put("key", Kind.KW_KEY);
+		this.reservedWord.put("value", Kind.KW_VALUE);
 	}
 	
 

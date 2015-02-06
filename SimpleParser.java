@@ -216,7 +216,14 @@ public class SimpleParser {
 		match(LCURLY);
 		FormalArgList();
 		match(ARROW);
-		StatementList();
+		if(isKind(STATEMENT_FIRST)){
+			Statement();
+			match(SEMICOLON);
+			while(isKind(STATEMENT_FIRST)){
+				Statement();
+				match(SEMICOLON);
+			}
+		}		
 		match(RCURLY);
 	}
 	
@@ -232,19 +239,7 @@ public class SimpleParser {
 				VarDec();
 			}
 		}		
-	}
-	
-	//<StatementList> ∷= <Statement>; (<Statement>;)*
-	private void StatementList() throws SyntaxException{
-		if(isKind(STATEMENT_FIRST)){
-			Statement();
-			match(SEMICOLON);
-			while(isKind(STATEMENT_FIRST)){
-				Statement();
-				match(SEMICOLON);
-			}
-		}		
-	}
+	}	
 	
 	/**
 	<Statement> ::= <LValue> = <Expression>

@@ -101,6 +101,7 @@ public class SimpleParser {
 	static final Kind[] VERY_STRONG_OPS = { LSHIFT, RSHIFT };
 	static final Kind[] SIMPLE_TYPE = { KW_INT, KW_BOOLEAN, KW_STRING }; 
 	static final Kind[] STATEMENT_FIRST = { IDENT, KW_PRINT, KW_WHILE, KW_IF, MOD, KW_RETURN };
+	static final Kind[] EXPRESSION_FIRST = { IDENT, INT_LIT, BL_TRUE, BL_FALSE, STRING_LIT, NL_NULL, LPAREN, NOT, MINUS, KW_SIZE, KW_KEY, KW_VALUE, LCURLY,AT };
 	
 	public void parse() throws SyntaxException {
 		Program();
@@ -134,6 +135,7 @@ public class SimpleParser {
 		while(isKind(KW_DEF) || isKind(STATEMENT_FIRST) || isKind(SEMICOLON)){
 			if(isKind(KW_DEF)){
 				Declaration();
+				match(SEMICOLON);
 			}else if(isKind(STATEMENT_FIRST)){
 				Statement();
 				match(SEMICOLON);
@@ -162,8 +164,7 @@ public class SimpleParser {
 		if(isKind(COLON)){
 			match(COLON);
 			Type();
-		}
-		match(SEMICOLON);		
+		}		
 	}
 	
 	//<Type> ::= <SimpleType> | <KeyValueType> | <ListType>
@@ -179,6 +180,8 @@ public class SimpleParser {
 			}else{
 				throw new SyntaxException(t, t.kind);
 			}
+		}else{
+			throw new SyntaxException(t, t.kind);
 		}
 	}
 	
@@ -208,7 +211,6 @@ public class SimpleParser {
 	private void ClosureDec() throws SyntaxException{
 		match(ASSIGN);
 		Closure();
-		match(SEMICOLON);
 	}
 	
 	//<Closure> ∷= { <FormalArgList> - > <StatementList> }
@@ -229,13 +231,14 @@ public class SimpleParser {
 	
 	//<FormalArgList> ∷= ϵ | <VarDec> (, <VarDec>)*
 	private void FormalArgList() throws SyntaxException{
-		if(isKind(KW_DEF)){
-			match(KW_DEF);
-			if(isKind(COLON) || isKind(SEMICOLON)){
+		if(isKind(IDENT)){
+			match(IDENT);
+			if(isKind(COLON)){
 				VarDec();
 			}
 			while(isKind(COMMA)){
-				match(KW_DEF);
+				match(COMMA);
+				match(IDENT);
 				VarDec();
 			}
 		}		
@@ -336,11 +339,13 @@ public class SimpleParser {
 	
 	//<ExpressionList> ∷= ϵ | <Expression> ( , <Expression> )*
 	private void ExpressionList() throws SyntaxException{
-		Expression();
-		while(isKind(COMMA)){
-			match(COMMA);
+		if(isKind(EXPRESSION_FIRST)){
 			Expression();
-		}
+			while(isKind(COMMA)){
+				match(COMMA);
+				Expression();
+			}
+		}		
 	}
 		
 	//<KeyValueExpression> ::= <Expression> : <Expression>
@@ -352,10 +357,12 @@ public class SimpleParser {
 			
 	//<KeyValueList> ∷= ϵ | <KeyValueExpression> ( , <KeyValueExpression> ) *
 	private void KeyValueList() throws SyntaxException{
-		KeyValueExpression();
-		while(isKind(COMMA)){
-			match(COMMA);
+		if(isKind(EXPRESSION_FIRST)){
 			KeyValueExpression();
+			while(isKind(COMMA)){
+				match(COMMA);
+				KeyValueExpression();
+			}
 		}
 	}
 	
@@ -436,7 +443,7 @@ public class SimpleParser {
 		case INT_LIT:
 			match(INT_LIT);
 			break;
-		case BL_TRUE:
+		case BL_TRUE:						
 			match(BL_TRUE);
 			break;
 		case BL_FALSE:
@@ -490,6 +497,8 @@ public class SimpleParser {
 			}else if(isKind(AT)){
 				MapList();
 				break;
+			}else{
+				throw new SyntaxException(t, t.kind);	
 			}			
 		default:
 			throw new SyntaxException(t, t.kind);		
@@ -497,7 +506,7 @@ public class SimpleParser {
 	}
 		
 	public static void main(String[] args) throws SyntaxException {
-		TokenStream stream = new TokenStream("class A  { \n x = @[a,b,c]; \n y = @[d,e,f]+x; \n");
+		TokenStream stream = new TokenStream("class A  { x = @@[a:b]; } ");
 		Scanner scanner = new Scanner(stream);
 		scanner.scan();
 		SimpleParser parser = new SimpleParser(stream);

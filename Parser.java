@@ -141,24 +141,24 @@ public class Parser {
 		return new Program(first, imports, name, block);
 	}
 
-	//<ImportList> ∷=( import IDENT ( . IDENT )* ;) *
+	//<ImportList> ::=( import IDENT ( . IDENT )* ;) *
 	private List<QualifiedName> ImportList() throws SyntaxException {
 		List<QualifiedName> imports = new ArrayList<QualifiedName>();
 		QualifiedName qname = null;
 		Token first = t;
-		Token name;
-		String qualifiedname;
+		Token name = null;
 		while(isKind(KW_IMPORT)){
+			String qualifiedname = null;
 			consume();
 			name = t;
 			match(IDENT);
-			qualifiedname = t.getText();			
-			while(t.kind == DOT){
+			qualifiedname = name.getText();
+			while(isKind(DOT)){
 				consume();
 				name = t;
 				match(IDENT);	
-				//qualified name contain all the idents with the dots replaced by \
-				qualifiedname.concat("\\"+ name.getText());		
+				//qualified name contain all the idents with the "." replaced by "\"
+				qualifiedname += "\\"+name.getText();
 			}
 			match(SEMICOLON);
 			qname = new QualifiedName(first, qualifiedname);
@@ -167,7 +167,7 @@ public class Parser {
 		return imports;
 	}
 
-	//<Block> ∷= { (<Declaration> ; | <Statement> ; )* }
+	//<Block> ::= { (<Declaration> ; | <Statement> ; )* }
 	private Block block() throws SyntaxException {
 		List<BlockElem> elems = new ArrayList<BlockElem>();
 		BlockElem blockelem = null;
@@ -191,7 +191,7 @@ public class Parser {
 		return new Block(first, elems);
 	}
 	
-	//<Declaration> :≔ def <VarDec> | def <ClosureDec>
+	//<Declaration> :鈮� def <VarDec> | def <ClosureDec>
 	private BlockElem declaration() throws SyntaxException{
 		Declaration d = null;
 		Token first = t;
@@ -199,7 +199,7 @@ public class Parser {
 		Token identToken = t;
 		match(IDENT);
 		if(isKind(COLON) || isKind(SEMICOLON)){
-			//<VarDec> ∷= IDENT ( : <Type> | empty ) ;
+			//<VarDec> ::= IDENT ( : <Type> | empty ) ;
 			if(isKind(COLON)){
 				consume();
 				d = new VarDec(first, identToken, type());
@@ -208,7 +208,7 @@ public class Parser {
 			}
 		}else if(isKind(ASSIGN)){
 			consume();
-			//<ClosureDec> ∷= IDENT = <Closure>
+			//<ClosureDec> ::= IDENT = <Closure>
 			d = new ClosureDec(first, identToken, closure());
 		}else{
 			throw new SyntaxException(t, t.kind);
@@ -216,7 +216,7 @@ public class Parser {
 		return d;
 	}
 	
-	//<VarDec> ∷= IDENT ( : <Type> | empty ) ;
+	//<VarDec> ::= IDENT ( : <Type> | empty ) ;
 	private VarDec varDec() throws SyntaxException{
 		VarDec v = null;
 		Token first = t;
@@ -253,7 +253,7 @@ public class Parser {
 				match(RSQUARE);
 			}else if(isKind(LSQUARE)){
 				consume();
-				//<ListType> ∷= @ [ <Type> ]
+				//<ListType> ::= @ [ <Type> ]
 				type = new ListType(first, type());
 				match(RSQUARE);
 			}else{
@@ -265,7 +265,7 @@ public class Parser {
 		return type;
 	}	
 	
-	//<Closure> ∷= { <FormalArgList> - > <StatementList> }
+	//<Closure> ::= { <FormalArgList> - > <StatementList> }
 	private Closure closure() throws SyntaxException{
 		Token first = t;
 		Statement s = null;
@@ -288,7 +288,7 @@ public class Parser {
 		return new Closure(first, formalArgs, statements); 
 	}
 	
-	//<FormalArgList> ∷= ϵ | <VarDec> (, <VarDec>)*
+	//<FormalArgList> ::= empty | <VarDec> (, <VarDec>)*
 	private List<VarDec> formalArgList() throws SyntaxException{
 		List<VarDec> falist = new ArrayList<VarDec>();
 		VarDec v = null;
@@ -314,7 +314,7 @@ public class Parser {
 	| if (<Expression>) <Block> else <Block>
 	| %<Expression>
 	| return <Expression>
-	| ϵ
+	| empty
 	**/
 	private Statement statement() throws SyntaxException{
 		Statement s = null;
@@ -337,7 +337,7 @@ public class Parser {
 				consume();
 				match(LPAREN);
 				e = expression();
-				//<RangeExpression> ∷ <Expression> .. <Expression>
+				//<RangeExpression> :: <Expression> .. <Expression>
 				if(isKind(RANGE)){
 					consume();
 					RangeExpression re= new RangeExpression(first, e, expression());
@@ -401,7 +401,7 @@ public class Parser {
 		return l;
 	}
 	
-	//<ExpressionList> ∷= ϵ | <Expression> ( , <Expression> )*
+	//<ExpressionList> ::= empty | <Expression> ( , <Expression> )*
 	private List<Expression> expressionList() throws SyntaxException{
 		List<Expression> expressions= new ArrayList<Expression>();
 		if(isKind(EXPRESSION_FIRST)){
@@ -425,7 +425,7 @@ public class Parser {
 		return new KeyValueExpression(first, key, value);
 	}
 	
-	//<KeyValueList> ∷= ϵ | <KeyValueExpression> ( , <KeyValueExpression> ) *
+	//<KeyValueList> ::= empty | <KeyValueExpression> ( , <KeyValueExpression> ) *
 	private List<KeyValueExpression> keyValueList() throws SyntaxException{
 		List<KeyValueExpression> kvexpressions= new ArrayList<KeyValueExpression>();
 		if(isKind(EXPRESSION_FIRST)){
@@ -483,7 +483,7 @@ public class Parser {
 		return e1;
 	}
 
-	//<Thing> ∷= <Factor> ( <VeryStrongOp> <Factor )*
+	//<Thing> ::= <Factor> ( <VeryStrongOp> <Factor )*
 	private Expression thing() throws SyntaxException{
 		Expression e1 = null;
 		Expression e2 = null;
@@ -526,7 +526,7 @@ public class Parser {
 				break;
 			case LPAREN:
 				consume();
-				//<ClosureEvalExpression> ∷= IDENT (<ExpressionList>)
+				//<ClosureEvalExpression> ::= IDENT (<ExpressionList>)
 				e = new ClosureEvalExpression(first, identToken, expressionList());
 				match(RPAREN);
 				break;
@@ -590,14 +590,14 @@ public class Parser {
 			consume();
 			if(isKind(LSQUARE)){
 				consume();
-				//<List> ∷=@ [ <ExpressionList> ]
+				//<List> ::=@ [ <ExpressionList> ]
 				e = new ListExpression(first, expressionList());
 				match(RSQUARE);
 				break;
 			}else if(isKind(AT)){
 				consume();
 				match(LSQUARE);
-				//<MapList> ∷= @@[ <KeyValueList> ]
+				//<MapList> ::= @@[ <KeyValueList> ]
 				e = new MapListExpression(first, keyValueList());
 				match(RSQUARE);
 				break;
@@ -611,7 +611,7 @@ public class Parser {
 	}
 	
 	public static void main(String[] args) throws SyntaxException {
-		TokenStream stream = new TokenStream("class A {def C={->x=x+1; z = 3-4-5;};} ");
+		TokenStream stream = new TokenStream("import X; class A { }    ");
 		Scanner scanner = new Scanner(stream);
 		scanner.scan();
 		Parser parser = new Parser(stream);

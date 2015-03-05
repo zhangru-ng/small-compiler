@@ -62,13 +62,13 @@ public class TestParserErrorHandling {
 		System.out.println("***********\nmultiple_errors1");
 		String input = "class A {def B:int; def C:boolean; def S: strings;  def F: sing} ";
 		System.out.println(input);
-		parseIncorrectInput(input, IDENT, IDENT);
+		parseIncorrectInput(input, IDENT, IDENT, RCURLY);
 	}
 	
 
 	@Test
 	public void multiple_errors2() throws SyntaxException {
-		System.out.println("***********\nmultiple_errors2                                                                                    ");
+		System.out.println("***********\nmultiple_errors2");
 		String input = "class A {def C={->x=&true; z = false; w =& true;};} ";
 		System.out.println(input);
 		parseIncorrectInput(input, AND, AND );

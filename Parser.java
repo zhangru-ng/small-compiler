@@ -133,12 +133,14 @@ public class Parser {
 	//<Program> ::= <ImportList> class IDENT <Block>
 	private Program program() throws SyntaxException {
 		Token first = t;
+		Program p = null;
 		List<QualifiedName> imports = ImportList();
 		match(KW_CLASS);
 		String name = t.getText();
 		match(IDENT);
 		Block block = block();
-		return new Program(first, imports, name, block);
+		p = new Program(first, imports, name, block);
+		return p;
 	}
 
 	//<ImportList> ::=( import IDENT ( . IDENT )* ;) *
@@ -171,27 +173,57 @@ public class Parser {
 	private Block block() throws SyntaxException {
 		List<BlockElem> elems = new ArrayList<BlockElem>();
 		BlockElem blockelem = null;
-		Token first = t;
+		Token first = t;		
 		match(LCURLY);
 		while(isKind(KW_DEF) || isKind(STATEMENT_FIRST) || isKind(SEMICOLON)){
+			boolean exception = false;
 			if(isKind(KW_DEF)){
-				blockelem = declaration();
-				match(SEMICOLON);
+				try{
+					blockelem = declaration();
+				}catch(SyntaxException ed){
+					if(isKind(EOF)){
+						throw new SyntaxException(t, t.kind);
+					}
+					consume();
+					exceptionList.add(ed);
+					exception = true;
+				}
 			}else if(isKind(STATEMENT_FIRST)){
-				blockelem = statement();
-				match(SEMICOLON);
-			}else if(isKind(SEMICOLON)){
+				try{
+					blockelem = statement();
+				}catch(SyntaxException es){
+					if(isKind(EOF)){
+						throw new SyntaxException(t, t.kind);
+					}
+					consume();
+					exceptionList.add(es);
+					exception = true;
+				}
+			}else{
 				//statement may be empty
 				consume();
 				continue;
 			}
-			elems.add(blockelem);
+			if(exception){
+				while(!isKind(SEMICOLON)){
+					if(isKind(RCURLY)){
+						break;
+					}else if(isKind(EOF)){
+						throw new SyntaxException(t, t.kind);
+					}else{
+						consume();
+					}
+				}
+			}else{
+				elems.add(blockelem);
+			}
+			match(SEMICOLON);
 		}		
 		match(RCURLY);
 		return new Block(first, elems);
 	}
 	
-	//<Declaration> :鈮� def <VarDec> | def <ClosureDec>
+	//<Declaration> ::= def <VarDec> | def <ClosureDec>
 	private BlockElem declaration() throws SyntaxException{
 		Declaration d = null;
 		Token first = t;
@@ -274,15 +306,29 @@ public class Parser {
 		match(LCURLY);
 		formalArgs = formalArgList();
 		match(ARROW);
-		if(isKind(STATEMENT_FIRST)){
-			s = statement();
-			statements.add(s);
-			match(SEMICOLON);
-			while(isKind(STATEMENT_FIRST)){
+		while(isKind(STATEMENT_FIRST)){
+			boolean exception = false;
+			try{
 				s = statement();
-				statements.add(s);
-				match(SEMICOLON);
+			}catch(SyntaxException e){
+				consume();
+				exceptionList.add(e);
+				exception = true;
 			}
+			if(exception){
+				while(!isKind(SEMICOLON)){
+					if(isKind(RCURLY)){
+						break;
+					}else if(isKind(EOF)){
+						throw new SyntaxException(t, t.kind);
+					}else{
+						consume();
+					}
+				}
+			}else{
+				statements.add(s);
+			}
+			match(SEMICOLON);
 		}		
 		match(RCURLY);		
 		return new Closure(first, formalArgs, statements); 
@@ -302,7 +348,7 @@ public class Parser {
 			}
 		}	
 		return falist;
-	}	
+	}
 	
 	/**
 	<Statement> ::= <LValue> = <Expression>
@@ -611,13 +657,17 @@ public class Parser {
 	}
 	
 	public static void main(String[] args) throws SyntaxException {
-		TokenStream stream = new TokenStream("import X; class A {;;; }    ");
+		TokenStream stream = new TokenStream("class A {def x={ ,z ->};} ");//;};} 
 		Scanner scanner = new Scanner(stream);
 		scanner.scan();
 		Parser parser = new Parser(stream);
 		System.out.println();
 		ASTNode ast = parser.parse();
 		System.out.println(ast);
+		List<SyntaxException> exceptions = parser.getExceptionList();
+		for(SyntaxException e: exceptions){
+			System.out.println(e.getMessage());
+		}
 	}
 
 }

@@ -62,7 +62,7 @@ public class TestParserErrorHandling {
 		System.out.println("***********\nmultiple_errors1");
 		String input = "class A {def B:int; def C:boolean; def S: strings;  def F: sing} ";
 		System.out.println(input);
-		parseIncorrectInput(input, IDENT, IDENT, RCURLY);
+		parseIncorrectInput(input, IDENT, IDENT);
 	}
 	
 

@@ -286,9 +286,9 @@ public class RayTestParser {
 	@Test
 	public void expressionList2()throws SyntaxException {
 		System.out.println("expressionList2");
-		String input = "class A  { x[z] = a(b;); } ";
+		String input = "class A  { x[z] = a(b,); } ";
 		System.out.println(input);
-		parseIncorrectInput(input, SEMICOLON);
+		parseIncorrectInput(input, RPAREN);
 	} 	
 	
 	@Test
@@ -310,9 +310,9 @@ public class RayTestParser {
 	@Test
 	public void list2()throws SyntaxException {
 		System.out.println("list2");
-		String input = "class A  { x = @[a}; } ";
+		String input = "class A  { x = @[a); } ";
 		System.out.println(input);
-		parseIncorrectInput(input, RCURLY);
+		parseIncorrectInput(input, RPAREN);
 	} 	
 	
 	@Test
@@ -465,7 +465,110 @@ public class RayTestParser {
 		String input = "class A {def C={->x= +;};} ";
 		System.out.println(input);
 		parseIncorrectInput(input, PLUS);
+	}	
+	
+	@Test
+	public void declaration2() throws SyntaxException {
+		System.out.println("declaration2");
+		String input = "class A {def X:;} ";
+		System.out.println(input);
+		parseIncorrectInput(input, SEMICOLON);
+	}
+
+	@Test
+	public void declaration4() throws SyntaxException {
+		System.out.println("declaration4");
+		String input = "class A {def X={;} ";
+		System.out.println(input);
+		parseIncorrectInput(input, SEMICOLON, EOF);
 	}
 	
+	@Test
+	public void def_closure6() throws SyntaxException {
+		System.out.println("def_closure6");
+		String input = "class A {def x={y, z, v,->};} ";
+		System.out.println(input);
+		parseIncorrectInput(input, ARROW);
+	}	
+	
+	@Test
+	public void def_closure7() throws SyntaxException {
+		System.out.println("def_closure7");
+		String input = "class A {def x={ def ->};} ";
+		System.out.println(input);
+		parseIncorrectInput(input, KW_DEF);
+	}	
+	
+	@Test
+	public void def_closure8() throws SyntaxException {
+		System.out.println("def_closure8");
+		String input = "class A {def x={ - ->};} ";
+		System.out.println(input);
+		parseIncorrectInput(input, MINUS);
+	}	
+	
+	@Test
+	public void def_closure9() throws SyntaxException {
+		System.out.println("def_closure9");
+		String input = "class A {def x={ 1 ->};} ";
+		System.out.println(input);
+		parseIncorrectInput(input, INT_LIT);
+	}	
+	
+	@Test
+	public void def_closure10() throws SyntaxException {
+		System.out.println("def_closure10");
+		String input = "class A {def x={ y, @ ->};} ";
+		System.out.println(input);
+		parseIncorrectInput(input, AT);
+	}
+	
+	@Test
+	public void statement8() throws SyntaxException {
+		System.out.println("statement8");
+		String input = "class A  { while/(a[1]..a[10]) { }; } ";
+		System.out.println(input);
+		parseIncorrectInput(input, DIV);
+	}
+	
+	@Test
+	public void statement9() throws SyntaxException {
+		System.out.println("statement9");
+		String input = "class A  { while a) { }; } ";
+		System.out.println(input);
+		parseIncorrectInput(input, IDENT);
+	}
+	
+	@Test
+	public void statement10() throws SyntaxException {
+		System.out.println("statement10");
+		String input = "class A  { while(a { }; } ";
+		System.out.println(input);
+		parseIncorrectInput(input, LCURLY);
+	}
+	
+	@Test
+	public void statement11() throws SyntaxException {
+		System.out.println("statement11");
+		String input = "class A  { if a) { }; } ";
+		System.out.println(input);
+		parseIncorrectInput(input, IDENT);
+	}
+	
+	@Test
+	public void statement12() throws SyntaxException {
+		System.out.println("statement12");
+		String input = "class A  { if(a { };  } ";
+		System.out.println(input);
+		parseIncorrectInput(input, LCURLY);
+	}
+
+	@Test
+	public void statement13() throws SyntaxException {
+		System.out.println("statement13");
+		String input = "class A  { if(a) { } else() { }; } ";
+		System.out.println(input);
+		parseIncorrectInput(input, LPAREN);
+	}
 
 }

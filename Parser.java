@@ -103,10 +103,13 @@ public class Parser {
 	static final Kind[] WEAK_OPS = { PLUS, MINUS };
 	static final Kind[] STRONG_OPS = { TIMES, DIV };
 	static final Kind[] VERY_STRONG_OPS = { LSHIFT, RSHIFT };
+	//the FIRST set of simple type
 	static final Kind[] SIMPLE_TYPE = { KW_INT, KW_BOOLEAN, KW_STRING }; 
+	//the FIRST set of statement
 	static final Kind[] STATEMENT_FIRST = { IDENT, KW_PRINT, KW_WHILE, KW_IF, MOD, KW_RETURN };
+	//the FIRST set of expression
 	static final Kind[] EXPRESSION_FIRST = { IDENT, INT_LIT, BL_TRUE, BL_FALSE, STRING_LIT, NL_NULL, LPAREN, NOT, MINUS, KW_SIZE, KW_KEY, KW_VALUE, LCURLY, AT };
-	
+	//List to store exception information
 	List<SyntaxException> exceptionList = new ArrayList<SyntaxException>();
 	
 	public List<SyntaxException> getExceptionList(){
@@ -134,10 +137,25 @@ public class Parser {
 	private Program program() throws SyntaxException {
 		Token first = t;
 		Program p = null;
+		String name = null;
 		List<QualifiedName> imports = ImportList();
-		match(KW_CLASS);
-		String name = t.getText();
-		match(IDENT);
+		//try-catch deal with missing class and class name
+		try{
+			match(KW_CLASS);
+			name = t.getText();
+			match(IDENT);
+		}catch(SyntaxException e){
+			exceptionList.add(e);	
+			//loop exit when meeting the first "{"
+			while(!isKind(LCURLY)){
+				//if EOF occur, rethrow exception
+				if(isKind(EOF)){
+					throw new SyntaxException(t, t.kind);					
+				}else{
+					consume();
+				}
+			}
+		}		
 		Block block = block();
 		p = new Program(first, imports, name, block);
 		return p;
@@ -152,16 +170,32 @@ public class Parser {
 		while(isKind(KW_IMPORT)){
 			String qualifiedname = null;
 			consume();
-			name = t;
-			match(IDENT);
-			qualifiedname = name.getText();
-			while(isKind(DOT)){
-				consume();
+			//try-catch deal with wrong import names
+			try{
 				name = t;
-				match(IDENT);	
-				//qualified name contain all the idents with the "." replaced by "\"
-				qualifiedname += "\\"+name.getText();
-			}
+				match(IDENT);
+				qualifiedname = name.getText();
+				while(isKind(DOT)){
+					consume();
+					name = t;
+					match(IDENT);	
+					//qualified name contain all the idents with the "." replaced by "\"
+					qualifiedname += "/"+name.getText();
+				}
+			}catch(SyntaxException e){
+				exceptionList.add(e);	
+				//consume token until ";" or "class" occur
+				while(!isKind(SEMICOLON)){
+					if(isKind(KW_CLASS)){
+						return null;
+					}else if(isKind(EOF)){
+						//if EOF occur, rethrow exception
+						throw new SyntaxException(t, t.kind);
+					}else{
+						consume();
+					}
+				}
+			}			
 			match(SEMICOLON);
 			qname = new QualifiedName(first, qualifiedname);
 			imports.add(qname);
@@ -173,78 +207,93 @@ public class Parser {
 	private Block block() throws SyntaxException {
 		List<BlockElem> elems = new ArrayList<BlockElem>();
 		BlockElem blockelem = null;
-		Token first = t;		
-		match(LCURLY);
+		Token first = t;
+		//try-catch deal with missing first "{" of block
+		try{
+			match(LCURLY);
+		}catch(SyntaxException e){
+			exceptionList.add(e);
+			//if "def" or statement_FIRST or ";" occur, start to parse block 
+			while(!isKind(KW_DEF) && !isKind(STATEMENT_FIRST) && !isKind(SEMICOLON)){
+				if(isKind(EOF)){
+					throw new SyntaxException(t, t.kind);
+				}else if(isKind(RCURLY)){
+					//if "}" occur, exit loop
+					break;
+				}else{
+					consume();
+				}
+			}
+		}		
 		while(isKind(KW_DEF) || isKind(STATEMENT_FIRST) || isKind(SEMICOLON)){
-			boolean exception = false;
 			if(isKind(KW_DEF)){
-				try{
 					blockelem = declaration();
-				}catch(SyntaxException ed){
-					if(isKind(EOF)){
-						throw new SyntaxException(t, t.kind);
-					}
-					consume();
-					exceptionList.add(ed);
-					exception = true;
-				}
 			}else if(isKind(STATEMENT_FIRST)){
-				try{
 					blockelem = statement();
-				}catch(SyntaxException es){
-					if(isKind(EOF)){
-						throw new SyntaxException(t, t.kind);
-					}
-					consume();
-					exceptionList.add(es);
-					exception = true;
-				}
 			}else{
 				//statement may be empty
 				consume();
 				continue;
 			}
-			if(exception){
-				while(!isKind(SEMICOLON)){
-					if(isKind(RCURLY)){
-						break;
-					}else if(isKind(EOF)){
-						throw new SyntaxException(t, t.kind);
-					}else{
-						consume();
-					}
-				}
-			}else{
+			//if there is no exception in this block element
+			if(blockelem != null){
+				match(SEMICOLON);
 				elems.add(blockelem);
-			}
-			match(SEMICOLON);
+			}			
 		}		
 		match(RCURLY);
-		return new Block(first, elems);
+		return new Block(first, elems);				
 	}
 	
 	//<Declaration> ::= def <VarDec> | def <ClosureDec>
 	private BlockElem declaration() throws SyntaxException{
-		Declaration d = null;
+		BlockElem d = null;
+		Closure c = null;
 		Token first = t;
-		match(KW_DEF);
-		Token identToken = t;
-		match(IDENT);
-		if(isKind(COLON) || isKind(SEMICOLON)){
-			//<VarDec> ::= IDENT ( : <Type> | empty ) ;
-			if(isKind(COLON)){
+		//try-catch deal with declaration exception
+		try{
+			match(KW_DEF);
+			Token identToken = t;
+			match(IDENT);
+			if(isKind(COLON) || isKind(SEMICOLON)){
+				//<VarDec> ::= IDENT ( : <Type> | empty ) ;
+				if(isKind(COLON)){
+					consume();
+					d = new VarDec(first, identToken, type());
+				}else{
+					d = new VarDec(first, identToken, new UndeclaredType(identToken));
+				}
+			}else if(isKind(ASSIGN)){
 				consume();
-				d = new VarDec(first, identToken, type());
+				//c equal to null if there is exception in closure
+				c = closure();
+				//<ClosureDec> ::= IDENT = <Closure>
+				if(c != null){
+					d = new ClosureDec(first, identToken, c);
+				}else{
+					return null;
+				}				
 			}else{
-				d = new VarDec(first, identToken, null);
+				throw new SyntaxException(t, t.kind);
 			}
-		}else if(isKind(ASSIGN)){
-			consume();
-			//<ClosureDec> ::= IDENT = <Closure>
-			d = new ClosureDec(first, identToken, closure());
-		}else{
-			throw new SyntaxException(t, t.kind);
-		}
+		}catch(SyntaxException e){
+			exceptionList.add(e);	
+			while(true){
+				if(isKind(SEMICOLON)){
+					//prevent match ";" two times in block loop
+					match(SEMICOLON);
+					return null;
+				}else if(isKind(RCURLY)){
+					//if "}" occur, return 
+					return null;
+				}else if(isKind(EOF)){
+					//if EOF occur, rethrow exception
+					throw new SyntaxException(t, t.kind);
+				}else{
+					consume();
+				}
+			}			
+		}		
 		return d;
 	}
 	
@@ -258,7 +307,7 @@ public class Parser {
 			consume();
 			v = new VarDec(first, identToken, type());
 		}else{
-			v = new VarDec(first, identToken, null);
+			v = new VarDec(first, identToken, new UndeclaredType(identToken));
 		}
 		return v;
 	}
@@ -289,46 +338,49 @@ public class Parser {
 				type = new ListType(first, type());
 				match(RSQUARE);
 			}else{
-				throw new SyntaxException(t, t.kind);
+				Kind[] compound_type = { AT, LSQUARE };
+				throw new SyntaxException(t, compound_type);
 			}
 		}else{
-			throw new SyntaxException(t, t.kind);
+			Kind[] type_set = { KW_INT, KW_BOOLEAN, KW_STRING, AT };
+			throw new SyntaxException(t, type_set);
 		}
 		return type;
 	}	
 	
-	//<Closure> ::= { <FormalArgList> - > <StatementList> }
+	//<Closure> ::= { <FormalArgList> -> <StatementList> }
 	private Closure closure() throws SyntaxException{
 		Token first = t;
 		Statement s = null;
 		List<VarDec> formalArgs = new ArrayList<VarDec>();
 		List<Statement> statements = new ArrayList<Statement>();
-		match(LCURLY);
-		formalArgs = formalArgList();
-		match(ARROW);
-		while(isKind(STATEMENT_FIRST)){
-			boolean exception = false;
-			try{
-				s = statement();
-			}catch(SyntaxException e){
-				consume();
-				exceptionList.add(e);
-				exception = true;
-			}
-			if(exception){
-				while(!isKind(SEMICOLON)){
-					if(isKind(RCURLY)){
-						break;
-					}else if(isKind(EOF)){
-						throw new SyntaxException(t, t.kind);
-					}else{
-						consume();
-					}
+		//try-catch deal with exception lie between "{ <FormalArgList> ->"
+		try{
+			match(LCURLY);
+			formalArgs = formalArgList();
+			match(ARROW);
+		}catch(SyntaxException e){
+			exceptionList.add(e);	
+			//if exception occur, throw token until meet FIRST set of statement to continue parsing 
+			while(!isKind(STATEMENT_FIRST)){
+				//if EOF occur, rethrow exception
+				if(isKind(EOF)){
+					throw new SyntaxException(t, t.kind);
+				}else if(isKind(RCURLY)){
+					//closure itself end with "}", consume it
+					consume();
+					return null;
+				}else{
+					consume();
 				}
-			}else{
-				statements.add(s);
 			}
-			match(SEMICOLON);
+		}		
+		while(isKind(STATEMENT_FIRST)){
+			s = statement();
+			if(s != null){
+				statements.add(s);
+				match(SEMICOLON);
+			}			
 		}		
 		match(RCURLY);		
 		return new Closure(first, formalArgs, statements); 
@@ -350,7 +402,7 @@ public class Parser {
 		return falist;
 	}
 	
-	/**
+	/*
 	<Statement> ::= <LValue> = <Expression>
 	| print <Expression>
 	| while (<Expression>) <Block>
@@ -361,71 +413,119 @@ public class Parser {
 	| %<Expression>
 	| return <Expression>
 	| empty
-	**/
+	*/
 	private Statement statement() throws SyntaxException{
 		Statement s = null;
 		Token first = t;
 		Expression e = null;
 		Block block = null;
-		switch(t.kind){
-		case IDENT:
-			LValue lvalue = lValue();
-			match(ASSIGN);
-			s = new AssignmentStatement(first, lvalue, expression());
-			break;
-		case KW_PRINT:
-			consume();
-			s = new PrintStatement(first, expression());
-			break;
-		case KW_WHILE:
-			consume();
-			if(isKind(TIMES)){
-				consume();
-				match(LPAREN);
-				e = expression();
-				//<RangeExpression> :: <Expression> .. <Expression>
-				if(isKind(RANGE)){
-					consume();
-					RangeExpression re= new RangeExpression(first, e, expression());
-					match(RPAREN);
-					s = new WhileRangeStatement(first, re, block());
-					break;
-				}
-				match(RPAREN);
-				s = new WhileStarStatement(first, e, block());
-			}else if(isKind(LPAREN)){
-				consume();
-				e = expression();
-				match(RPAREN);
-				s = new WhileStatement(first, e, block()); 
-			}else{
-				throw new SyntaxException(t, t.kind);
-			}			
-			break;
-		case KW_IF:
-			consume();
-			match(LPAREN);
-			e = expression();
-			match(RPAREN);
-			block = block();
-			if(isKind(KW_ELSE)){
-				consume();
-				s = new IfElseStatement(first, e, block, block());
+		try{
+			switch(t.kind){
+			case IDENT:
+				LValue lvalue = lValue();
+				match(ASSIGN);
+				s = new AssignmentStatement(first, lvalue, expression());
 				break;
+			case KW_PRINT:
+				consume();
+				s = new PrintStatement(first, expression());
+				break;
+			case KW_WHILE:
+				consume();
+				//try-catch deal with while exceptions
+				try{
+					if(isKind(TIMES)){
+						consume();
+						match(LPAREN);
+						e = expression();
+						//<RangeExpression> :: <Expression> .. <Expression>
+						if(isKind(RANGE)){
+							consume();
+							RangeExpression re= new RangeExpression(first, e, expression());
+							match(RPAREN);
+							s = new WhileRangeStatement(first, re, block());
+							break;
+						}
+						match(RPAREN);
+						s = new WhileStarStatement(first, e, block());
+					}else if(isKind(LPAREN)){
+						consume();
+						e = expression();
+						match(RPAREN);
+						s = new WhileStatement(first, e, block()); 
+					}else{
+						Kind[] while_set = { TIMES, LPAREN };
+						throw new SyntaxException(t, while_set);
+					}			
+				}catch(SyntaxException whileException){
+					exceptionList.add(whileException);	
+					//throw token until meet "}"
+					while(!isKind(RCURLY)){
+						if(isKind(EOF)){
+							throw new SyntaxException(t, t.kind);
+						}
+						consume();
+					}
+					//closure itself end with "}", consume it
+					match(RCURLY);
+				}			
+				break;
+			case KW_IF:
+				consume();
+				//try-catch deal with if exceptions
+				try{
+					match(LPAREN);
+					e = expression();
+					match(RPAREN);
+					block = block();
+					if(isKind(KW_ELSE)){
+						consume();
+						s = new IfElseStatement(first, e, block, block());
+						break;
+					}
+					s = new IfStatement(first, e, block);
+				}catch(SyntaxException ifException){
+					exceptionList.add(ifException);	
+					//throw token until meet "}"
+					while(!isKind(RCURLY)){
+						if(isKind(EOF)){
+							throw new SyntaxException(t, t.kind);
+						}
+						consume();
+					}
+					//closure itself end with "}", consume it
+					match(RCURLY);
+				}		
+				break;
+			case KW_RETURN:
+				consume();
+				s = new ReturnStatement(first, expression());
+				break;
+			case MOD:
+				consume();
+				s = new ExpressionStatement(first, expression());
+				break;
+			default:	
+				throw new SyntaxException(t, STATEMENT_FIRST);
 			}
-			s = new IfStatement(first, e, block);
-			break;
-		case KW_RETURN:
-			consume();
-			s = new ReturnStatement(first, expression());
-			break;
-		case MOD:
-			consume();
-			s = new ExpressionStatement(first, expression());
-			break;
-		default:	
-			throw new SyntaxException(t, t.kind);
-		}
+		}catch(SyntaxException e1){
+			exceptionList.add(e1);	
+			while(true){
+				//if "}" occur, return
+				if(isKind(RCURLY)){
+					return null;
+				}else if(isKind(SEMICOLON)){
+					//prevent match ";" two times in block loop
+					match(SEMICOLON);
+					return null;
+				}else if(isKind(EOF)){
+					//if EOF occur, rethrow exception
+					throw new SyntaxException(t, t.kind);
+				}else{
+					consume();
+				}
+			}			
+		}		
 		return s;
 	}
 	
@@ -544,7 +644,7 @@ public class Parser {
 		return e1;
 	}
 	
-	/**
+	/*
 	 IDENT | 
 	 IDENT [ <Expression> ] | 
 	 INT_LIT | true | false | STRING_LIT | 
@@ -555,7 +655,7 @@ public class Parser {
 	 value(<Expression >) | 
 	 <ClosureEvalExpression> | <Closure> | 
 	 <List> | <MapList>
-	 **/
+	 */
 	private Expression factor() throws SyntaxException{
 		Expression e = null;
 		Token first = t;
@@ -648,16 +748,17 @@ public class Parser {
 				match(RSQUARE);
 				break;
 			}else{
-				throw new SyntaxException(t, t.kind);	
+				Kind[] list_set = { LSQUARE, AT };
+				throw new SyntaxException(t, list_set);	
 			}			
 		default:
-			throw new SyntaxException(t, t.kind);		
+			throw new SyntaxException(t, EXPRESSION_FIRST);		
 		}
 		return e;
 	}
 	
 	public static void main(String[] args) throws SyntaxException {
-		TokenStream stream = new TokenStream("class A {def x={ ,z ->};} ");//;};} 
+		TokenStream stream = new TokenStream(" class s{ def a; }    ");
 		Scanner scanner = new Scanner(stream);
 		scanner.scan();
 		Parser parser = new Parser(stream);

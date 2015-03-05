@@ -182,8 +182,8 @@ public class Parser {
 				match(SEMICOLON);
 			}else if(isKind(SEMICOLON)){
 				//statement may be empty
-				blockelem = null;
-				match(SEMICOLON);
+				consume();
+				continue;
 			}
 			elems.add(blockelem);
 		}		
@@ -611,7 +611,7 @@ public class Parser {
 	}
 	
 	public static void main(String[] args) throws SyntaxException {
-		TokenStream stream = new TokenStream("import X; class A { }    ");
+		TokenStream stream = new TokenStream("import X; class A {;;; }    ");
 		Scanner scanner = new Scanner(stream);
 		scanner.scan();
 		Parser parser = new Parser(stream);

@@ -5,7 +5,7 @@ import java.util.List;
 import cop5555sp15.TokenStream.Token;
 
 public class Block extends ASTNode {
-	List<BlockElem> elems;
+	public List<BlockElem> elems;
 
 	public Block(Token firstToken, List<BlockElem> elems) {
 		super(firstToken);

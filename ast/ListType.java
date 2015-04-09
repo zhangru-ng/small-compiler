@@ -12,5 +12,15 @@ public class ListType extends Type {
 		super(firstToken);
 		this.type = type;
 	}
+	@Override
+	public String getJVMType() {
+		String elementType = type.getJVMType();
+		return "Ljava/util/List<"+elementType+">;";	
+	}
+	
+	public static String prefix(){
+		return "Ljava/util/List";
+	}
+
 
 }

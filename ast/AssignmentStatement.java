@@ -5,7 +5,7 @@ import cop5555sp15.TokenStream.Token;
 public class AssignmentStatement extends Statement {
 	
 	LValue lvalue;
-	Expression expression;
+	public Expression expression;
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {

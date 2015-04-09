@@ -18,5 +18,13 @@ public class KeyValueExpression extends Expression {
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
 		return v.visitKeyValueExpression(this,arg);
 	}
+	
+	public String keyType(){
+		return key.expressionType;
+	}
+	
+	public String valueType(){
+		return value.expressionType;
+	}
 
 }

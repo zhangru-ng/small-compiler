@@ -17,4 +17,12 @@ public class SimpleType extends Type {
 		return v.visitSimpleType(this,arg);
 	}
 
+
+	@Override
+	String getJVMType() {
+		if(type.getText().equals("int")) return "I";
+		else if (type.getText().equals("boolean")) return "Z";
+		else return "Ljava/lang/String;";
+	}
+
 }

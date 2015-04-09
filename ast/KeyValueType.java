@@ -19,4 +19,12 @@ public class KeyValueType extends Type {
 		return v.visitKeyValueType(this,arg);
 	}
 
+
+	@Override
+	String getJVMType() {
+		String keyJVMType = keyType.getJVMType();
+		String valueJVMType = valueType.getJVMType();
+		return "Ljava/util/Map$Entry<"+keyJVMType+valueJVMType+">;";
+	}
+
 }

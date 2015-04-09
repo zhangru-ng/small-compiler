@@ -6,8 +6,10 @@ import cop5555sp15.TokenStream.Token;
 
 public class Program extends ASTNode {
 	List<QualifiedName> imports;
-	String name;
-	Block block;
+	public String name;
+	public Block block;
+	
+	public String JVMName;
 
 	public Program(Token firstToken, List<QualifiedName> imports, String name, Block block) {
 		super(firstToken);

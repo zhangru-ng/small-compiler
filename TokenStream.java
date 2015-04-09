@@ -14,12 +14,9 @@ import java.util.ArrayList;
  *
  */
 public class TokenStream {
-	
-
 	char[] inputChars; // input
 	public final ArrayList<Token> tokens = new ArrayList<Token>(); // holds tokens after scan
-							
-	
+																	
 
 	/* provide input in char array */
 	public TokenStream(char[] inputChars) {
@@ -80,8 +77,8 @@ public class TokenStream {
 	public static enum Kind {
 		IDENT,
 		/* reserved words */
-		KW_INT, KW_STRING, KW_BOOLEAN, KW_IMPORT, KW_CLASS, KW_DEF, KW_WHILE, KW_IF, KW_ELSE, KW_RETURN, KW_PRINT,
-		KW_SIZE, KW_KEY, KW_VALUE,
+		KW_INT, KW_STRING, KW_BOOLEAN, KW_IMPORT, KW_CLASS, KW_DEF, 
+		KW_WHILE, KW_IF, KW_ELSE, KW_RETURN, KW_PRINT, KW_SIZE, KW_KEY, KW_VALUE,
 		/* boolean literals */
 		BL_TRUE, BL_FALSE,
 		/* null literal */
@@ -127,10 +124,6 @@ public class TokenStream {
 		UNTERMINATED_COMMENT  //end of input is reached before the closing */
 	}
 
-	
-	
-	
-	
 	/*
 	 * This is a non-static inner class. Each instance is linked to a instance
 	 * of StreamToken and can access that instance's variables.
@@ -139,7 +132,6 @@ public class TokenStream {
 	 * Token t = stream.new Token(SEMI, beg, end, line);
 	 */
 
-	
 	public class Token {
 		public final Kind kind;
 		public final int beg;
@@ -168,7 +160,7 @@ public class TokenStream {
 		public int getLineNumber() {
 			return lineNumber;
 		}
-	 
+
 		/**This method handles the escape characters in String literals.  The
 		 * getText method returns the string from the token's characters.  This means that
 		 * the Scanner can ignore escape characters.

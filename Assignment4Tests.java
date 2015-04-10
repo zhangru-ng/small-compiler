@@ -45,10 +45,15 @@ public class Assignment4Tests {
 		Parser parser = new Parser(stream);
 		System.out.println();
 		ASTNode ast = parser.parse();		
-		if (ast == null) {
-			System.out.println("errors " + parser.getErrors());
+		assertNull(ast);
+		List<SyntaxException> exceptions = parser.getExceptionList();
+		for(SyntaxException e: exceptions){
+			System.out.println(e.getMessage());
 		}
-		assertNotNull(ast);
+//		if (ast == null) {
+//			System.out.println("errors " + parser.getErrors());
+//		}
+//		assertNotNull(ast);
 		return ast;
 	}
 

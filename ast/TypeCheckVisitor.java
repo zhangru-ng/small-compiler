@@ -253,6 +253,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	@Override
 	public Object visitKeyValueType(KeyValueType keyValueType, Object arg)
 			throws Exception {
+		keyValueType.keyType.visit(this, arg);
+		keyValueType.valueType.visit(this, arg);
 		return keyValueType.getJVMType();
 	}
 
@@ -289,6 +291,7 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 
 	@Override
 	public Object visitListType(ListType listType, Object arg) throws Exception {
+		listType.type.visit(this, arg);
 		return listType.getJVMType();		
 	}
 
@@ -332,7 +335,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 
 	@Override
 	public Object visitQualifiedName(QualifiedName qualifiedName, Object arg) {
-		throw new UnsupportedOperationException();
+		assert false;
+		return null;
 	}
 
 	/**

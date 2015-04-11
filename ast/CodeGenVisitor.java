@@ -10,6 +10,7 @@ import static cop5555sp15.TokenStream.Kind.LE;
 import static cop5555sp15.TokenStream.Kind.LSHIFT;
 import static cop5555sp15.TokenStream.Kind.LT;
 import static cop5555sp15.TokenStream.Kind.MINUS;
+import static cop5555sp15.TokenStream.Kind.NOT;
 import static cop5555sp15.TokenStream.Kind.NOTEQUAL;
 import static cop5555sp15.TokenStream.Kind.PLUS;
 import static cop5555sp15.TokenStream.Kind.RSHIFT;
@@ -81,7 +82,6 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 			Object arg) throws Exception {
 		String varName = identExpression.identToken.getText();	
 		String varType = identExpression.getType();
-//		throw new UnsupportedOperationException("code generation not yet implemented");
 		MethodVisitor mv = ((InheritedAttributes) arg).mv;	
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitFieldInsn(GETFIELD, className, varName, varType);
@@ -189,19 +189,32 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 			mv.visitLabel(l1);
 			mv.visitInsn(ICONST_0);
 			mv.visitLabel(l2);
-		} else if (op == BAR || op == AND) {
+		} else if (op == AND) {
 			binaryExpression.expression0.visit(this, arg);
-			Label l = new Label();
-			mv.visitJumpInsn(IFEQ, l);
+			Label l1 = new Label();
+			mv.visitJumpInsn(IFEQ, l1);
 			binaryExpression.expression1.visit(this,arg);
-			mv.visitJumpInsn(IFEQ, l);
+			mv.visitJumpInsn(IFEQ, l1);
 			mv.visitInsn(ICONST_1);
-			Label lo2 = new Label();
-			mv.visitJumpInsn(GOTO, lo2);
-			mv.visitLabel(l);
+			Label l2 = new Label();
+			mv.visitJumpInsn(GOTO, l2);
+			mv.visitLabel(l1);
 			mv.visitInsn(ICONST_0);
-			mv.visitLabel(lo2);
-		} else {
+			mv.visitLabel(l2);			
+		} else if (op == BAR) {
+			binaryExpression.expression0.visit(this, arg);
+			Label l1 = new Label();
+			mv.visitJumpInsn(IFNE, l1);
+			binaryExpression.expression1.visit(this,arg);
+			mv.visitJumpInsn(IFNE, l1);
+			mv.visitInsn(ICONST_0);
+			Label l2 = new Label();
+			mv.visitJumpInsn(GOTO, l2);
+			mv.visitLabel(l1);
+			mv.visitInsn(ICONST_1);
+			mv.visitLabel(l2);
+		}
+		else {
 			throw new UnsupportedOperationException("code generation not yet implemented");
 		}
 		return null;
@@ -270,11 +283,6 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 	@Override
 	public Object visitExpressionLValue(ExpressionLValue expressionLValue,
 			Object arg) throws Exception {
-//		MethodVisitor mv = ((InheritedAttributes) arg).mv;
-//		String varName = expressionLValue.identToken.getText();	
-//		String varType = expressionLValue.expression.getType();
-//		expressionLValue.expression.visit(this, arg);
-//		mv.visitFieldInsn(GETSTATIC, className, varName, varType);			
 		throw new UnsupportedOperationException(
 				"code generation not yet implemented");
 	}
@@ -284,6 +292,7 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 			ExpressionStatement expressionStatement, Object arg)
 			throws Exception {
 		expressionStatement.expression.visit(this, arg);
+		
 		throw new UnsupportedOperationException(
 				"code generation not yet implemented");
 	}	
@@ -291,20 +300,29 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 	@Override
 	public Object visitIfElseStatement(IfElseStatement ifElseStatement,
 			Object arg) throws Exception {
+		MethodVisitor mv = ((InheritedAttributes) arg).mv;
+		Label l1 = new Label();
 		ifElseStatement.expression.visit(this, arg);
+		mv.visitJumpInsn(IFEQ, l1);
 		ifElseStatement.ifBlock.visit(this, arg);
+		Label l2 = new Label();
+		mv.visitJumpInsn(GOTO, l2);
+		mv.visitLabel(l1);
 		ifElseStatement.elseBlock.visit(this, arg);
-		throw new UnsupportedOperationException(
-				"code generation not yet implemented");
+		mv.visitLabel(l2);
+		return null;
 	}
 
 	@Override
 	public Object visitIfStatement(IfStatement ifStatement, Object arg)
 			throws Exception {
+		MethodVisitor mv = ((InheritedAttributes) arg).mv;
+		Label l1 = new Label();
 		ifStatement.expression.visit(this, arg);
-		ifStatement.block.visit(this, arg);
-		throw new UnsupportedOperationException(
-				"code generation not yet implemented");
+		mv.visitJumpInsn(IFEQ, l1);
+		ifStatement.block.visit(this, arg);		
+		mv.visitLabel(l1);
+		return null;
 	}
 
 	
@@ -452,9 +470,7 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 		mv.visitMaxs(0, 0);  //this is required just before the end of a method. 
 		                     //It causes asm to calculate information about the
 		                     //stack usage of this method.
-		mv.visitEnd();
-
-		
+		mv.visitEnd();		
 		cw.visitEnd();
 		return cw.toByteArray();
 	}
@@ -508,9 +524,21 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 	@Override
 	public Object visitUnaryExpression(UnaryExpression unaryExpression,
 			Object arg) throws Exception {
+		MethodVisitor mv = ((InheritedAttributes) arg).mv;
 		unaryExpression.expression.visit(this, arg);
-		throw new UnsupportedOperationException(
-				"code generation not yet implemented");
+		if(unaryExpression.op.kind == NOT) {
+			Label l1 = new Label();
+			mv.visitJumpInsn(IFEQ, l1);
+			mv.visitInsn(ICONST_0);
+			Label l2 = new Label();
+			mv.visitJumpInsn(GOTO, l2);
+			mv.visitLabel(l1);
+			mv.visitInsn(ICONST_1);
+			mv.visitLabel(l2);	
+		} else if (unaryExpression.op.kind == MINUS) { 
+			mv.visitInsn(INEG);
+		}
+		return null;
 	}
 
 	@Override
@@ -543,10 +571,13 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 	@Override
 	public Object visitWhileStatement(WhileStatement whileStatement, Object arg)
 			throws Exception {
+		MethodVisitor mv = ((InheritedAttributes) arg).mv;
+		Label l1 = new Label();
 		whileStatement.expression.visit(this, arg);
-		whileStatement.block.visit(this, arg);
-		throw new UnsupportedOperationException(
-				"code generation not yet implemented");
+		mv.visitJumpInsn(IFEQ, l1);
+		whileStatement.block.visit(this, arg);		
+		mv.visitLabel(l1);		
+		return null;
 	}
 
 	@Override

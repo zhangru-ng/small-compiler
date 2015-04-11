@@ -3,6 +3,7 @@ package cop5555sp15.ast;
 import java.util.ArrayList;
 import java.util.List;
 
+import cop5555sp15.TokenStream.Kind;
 import cop5555sp15.TypeConstants;
 import cop5555sp15.symbolTable.SymbolTable;
 import static cop5555sp15.TokenStream.Kind.*;
@@ -47,13 +48,48 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 
 	/**
 	 * Ensure that both types are the same, save and return the result type
+	 *		int (+ | - | * | /) int 				-> int
+	 *      string + string         				-> string
+	 *      int (== | != | < | <= | >= | >) int     -> boolean
+	 *      string (== | !=) string       			-> boolean
 	 */
 	@Override
 	public Object visitBinaryExpression(BinaryExpression binaryExpression,
 			Object arg) throws Exception {
 		String expr0Type = (String) binaryExpression.expression0.visit(this,arg);
 		String expr1Type = (String) binaryExpression.expression1.visit(this,arg);
+		Kind op = binaryExpression.op.kind;
 		check(expr0Type.equals(expr1Type), "uncompatible bianry expression", binaryExpression);
+		switch(op) {
+		case PLUS:
+			check(expr0Type.equals(intType) || expr0Type == stringType, "operator " + op.toString() + " is not defined for " + expr0Type, binaryExpression);
+			break;
+		case MINUS:	case TIMES:	case DIV:			
+			check(expr0Type.equals(intType), "operator " + op.toString() + " is not defined for " + expr0Type, binaryExpression);
+			break;
+		case EQUAL:	case NOTEQUAL:
+			if (expr0Type == booleanType || expr0Type == intType ||expr0Type == stringType) {
+				binaryExpression.setType(booleanType);
+				return booleanType;
+			} else {
+				throw new TypeCheckException("operator " + op.toString() + " is not defined for " + expr0Type, binaryExpression);
+			}	
+		case LT: case GT: case LE: case GE:
+			if (expr0Type == booleanType || expr0Type == intType) {
+				binaryExpression.setType(booleanType);
+				return booleanType;
+			} else {
+				throw new TypeCheckException("operator " + op.toString() + " is not defined for " + expr0Type, binaryExpression);
+			}		
+		case LSHIFT: case RSHIFT:
+			check(expr0Type.equals(intType), "operator " + op.toString() + " is not defined for " + expr0Type, binaryExpression);
+			break;
+		case BAR: case AND:
+			check(expr0Type.equals(booleanType), "operator " + op.toString() + " is not defined for " + expr0Type, binaryExpression);
+			break;
+		default:
+			throw new TypeCheckException("operator " + op.toString() + " is not defined for " + expr0Type, binaryExpression);
+		} 	
 		binaryExpression.setType(expr0Type);
 		return expr0Type;
 	}
@@ -132,8 +168,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	public Object visitClosureDec(ClosureDec closureDec, Object arg) throws Exception {
 		String ident = closureDec.identToken.getText();
 		check(symbolTable.insert(ident, closureDec) == true, "redeclared Clousere", closureDec);
-		String closureType = (String) closureDec.closure.visit(this, arg);
-		return closureType;
+		closureDec.closure.visit(this, arg);
+		return null;
 	}
 
 	/**
@@ -146,17 +182,22 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			throws Exception {
 		String ident = closureEvalExpression.identToken.getText();
 		check(symbolTable.insert(ident, null) == false, "redeclare ClosureEval", closureEvalExpression);
-		ClosureDec cloDec = (ClosureDec) symbolTable.lookup(ident);
-		for (Expression expr : closureEvalExpression.expressionList) {
-			String exprType = (String) expr.visit(this, arg);
-		}
-		return cloDec.visit(this, arg);
+		Declaration dec = symbolTable.lookup(ident);
+		if (dec instanceof ClosureDec) {
+			for (Expression expr : closureEvalExpression.expressionList) {
+				expr.visit(this, arg);
+			}
+		} else {
+			throw new TypeCheckException(ident + " is not defined as a closure", closureEvalExpression);
+		}		
+		return null;
 	}
 
 	@Override
 	public Object visitClosureExpression(ClosureExpression closureExpression,
 			Object arg) throws Exception {
-		return closureExpression.closure.visit(this, arg);	
+		String closureReturnType = (String) closureExpression.closure.visit(this, arg);	
+		return closureReturnType;
 	}
 
 	@Override
@@ -165,8 +206,15 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		String ident = expressionLValue.identToken.getText();
 		check(symbolTable.insert(ident, null) == false, "redeclare ExpressionLValue", expressionLValue);
 		Declaration dec = symbolTable.lookup(ident);
-		String exprLvType = (String) dec.visit(this, arg);
-		return exprLvType;
+		if (dec instanceof VarDec) {
+			VarDec vd = (VarDec) dec;
+			String lvType = (String) vd.type.visit(this, arg);
+			String exprType = (String) expressionLValue.expression.visit(this, arg);
+			check(lvType == exprType, "Incompatible operand types in ExpressionLValue", expressionLValue);
+			return lvType;
+		} else {
+			throw new TypeCheckException(ident + " is not defined as a variable", expressionLValue);
+		}		
 	}
 
 	@Override
@@ -188,8 +236,14 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		String ident = identExpression.identToken.getText();
 		check(symbolTable.insert(ident, null) == false, "undeclare IdentExpression", identExpression);
 		Declaration dec = symbolTable.lookup(ident);
-		String identExprType = (String) dec.visit(this, arg);
-		return identExprType;
+		if (dec instanceof VarDec) {
+			VarDec vd = (VarDec) dec;
+			String identType = (String) vd.type.visit(this, arg);
+			identExpression.setType(identType);
+			return identType;
+		} else {
+			throw new TypeCheckException(ident + " is not defined as a variable", identExpression);
+		}		
 	}
 
 	@Override
@@ -198,8 +252,14 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		String ident = identLValue.identToken.getText();
 		check(symbolTable.insert(ident, null) == false, "undeclare IdentExpression", identLValue);
 		Declaration dec = symbolTable.lookup(ident);
-		String identLvType = (String) dec.visit(this, arg);
-		return identLvType;				
+		if (dec instanceof VarDec) {
+			VarDec vd = (VarDec)dec;
+			String lvType = (String) vd.type.visit(this, arg);
+			identLValue.setType(lvType);
+			return lvType;
+		} else {
+			throw new TypeCheckException(ident + " is not defined as a variable", identLValue);
+		}		
 	}
 
 	@Override
@@ -285,6 +345,10 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			throws Exception {
 		String ident = listOrMapElemExpression.identToken.getText();
 		check(symbolTable.insert(ident, null) == false, "undeclare MapElemExpression", listOrMapElemExpression);
+		Declaration dec = symbolTable.lookup(ident);
+		if (!(dec instanceof VarDec)) {			
+			throw new TypeCheckException(ident + " is not defined as a variable", listOrMapElemExpression);
+		}	
 		String lomrExprType = (String) listOrMapElemExpression.expression.visit(this, arg);
 		return lomrExprType;
 	}
@@ -388,9 +452,17 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	public Object visitUnaryExpression(UnaryExpression unaryExpression,
 			Object arg) throws Exception {
 		String exprType = (String) unaryExpression.expression.visit(this, arg);
-		boolean isUnary = unaryExpression.op.kind == NOT &&  exprType.equals(booleanType);
-		isUnary |= unaryExpression.op.kind == MINUS && exprType.equals(intType);
-		check(isUnary, "uncompatible unary expression", unaryExpression);
+		if(unaryExpression.op.kind == NOT) {
+			if(!exprType.equals(booleanType)) {
+				throw new TypeCheckException("not operator is undefined for " + exprType, unaryExpression);
+			}			
+		} else if (unaryExpression.op.kind == MINUS) { 
+			if (!exprType.equals(intType)){
+				throw new TypeCheckException("minus operator is undefined for " + exprType, unaryExpression);
+			}
+		} else {			
+			throw new TypeCheckException("uncompatible unary expression", unaryExpression);
+		}		
 		return exprType;
 	}
 
@@ -414,8 +486,7 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	public Object visitVarDec(VarDec varDec, Object arg) throws Exception {
 		String ident = varDec.identToken.getText();
 		check(symbolTable.insert(ident, varDec) == true, "redeclare VarDec", varDec);
-		String varType = (String) varDec.type.visit(this, arg);
-		return varType;
+		return null;
 	}
 
 	/**

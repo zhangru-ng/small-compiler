@@ -45,7 +45,7 @@ public class Assignment4Tests {
 		Parser parser = new Parser(stream);
 		System.out.println();
 		ASTNode ast = parser.parse();		
-		assertNull(ast);
+		assertNotNull(ast);
 		List<SyntaxException> exceptions = parser.getExceptionList();
 		for(SyntaxException e: exceptions){
 			System.out.println(e.getMessage());
@@ -82,9 +82,9 @@ public class Assignment4Tests {
 	
 	private byte[] generateByteCode(ASTNode ast) throws Exception {
 		CodeGenVisitor v = new CodeGenVisitor();
-			byte[] bytecode = (byte[]) ast.visit(v, null);
-			dumpBytecode(bytecode);
-			return bytecode;
+		byte[] bytecode = (byte[]) ast.visit(v, null);
+		dumpBytecode(bytecode);
+		return bytecode;
 	}
 	
     public void executeByteCode(String name, byte[] bytecode) throws InstantiationException, IllegalAccessException{
@@ -160,7 +160,7 @@ public void printBooleanLiteral() throws Exception{
  * go gators
  */
 public void printStringLiteral() throws Exception{
-	System.out.println("***********printIntLiteral");
+	System.out.println("***********printStringLiteral");
 	String input = "class A {\n print \"go gators\" ; \n}";
 	System.out.println(input);
 	Program program = (Program) parseCorrectInput(input);

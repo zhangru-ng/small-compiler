@@ -1,25 +1,10 @@
 package cop5555sp15.ast;
 
-import static cop5555sp15.TokenStream.Kind.AND;
-import static cop5555sp15.TokenStream.Kind.BAR;
-import static cop5555sp15.TokenStream.Kind.DIV;
-import static cop5555sp15.TokenStream.Kind.EQUAL;
-import static cop5555sp15.TokenStream.Kind.GE;
-import static cop5555sp15.TokenStream.Kind.GT;
-import static cop5555sp15.TokenStream.Kind.LE;
-import static cop5555sp15.TokenStream.Kind.LSHIFT;
-import static cop5555sp15.TokenStream.Kind.LT;
-import static cop5555sp15.TokenStream.Kind.MINUS;
-import static cop5555sp15.TokenStream.Kind.NOT;
-import static cop5555sp15.TokenStream.Kind.NOTEQUAL;
-import static cop5555sp15.TokenStream.Kind.PLUS;
-import static cop5555sp15.TokenStream.Kind.RSHIFT;
-import static cop5555sp15.TokenStream.Kind.TIMES;
+import static cop5555sp15.TokenStream.Kind.*;
 
 import org.objectweb.asm.*;
 
 import cop5555sp15.TokenStream.Kind;
-import cop5555sp15.ast.TypeCheckVisitor.TypeCheckException;
 import cop5555sp15.TypeConstants;
 
 public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
@@ -50,11 +35,33 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 	@Override
 	public Object visitVarDec(VarDec varDec, Object arg) throws Exception {
 		String varName = varDec.identToken.getText();
-		String varType = (String) varDec.type.visit(this, arg);		
-		{
-			fv = cw.visitField(0, varName, varType, null, null);
-			fv.visitEnd();
+		String varType = (String) varDec.type.visit(this, arg);	
+		if (varType == intType || varType == booleanType || varType == stringType) {
+			{
+				fv = cw.visitField(0, varName, varType, null, null);
+				fv.visitEnd();
+			}
+		} else if (varType.substring(0, varType.indexOf("<")).equals("Ljava/util/List")) {
+			String listType = null;
+			if (varType == emptyList) {
+				listType = "Ljava/util/List;";
+			} else {
+				String elementType = varType.substring(varType.indexOf("<") + 1, varType.indexOf(">"));
+				if (elementType == intType) {
+					elementType = "Ljava/lang/Integer;";
+				} else if (elementType == booleanType) {
+					elementType = "Ljava/lang/Boolean;";				
+				} else if (elementType == stringType) {
+					elementType = "Ljava/lang/String;";				
+				}
+				listType = "Ljava/util/ArrayList<" + elementType + ">;";
+			}			
+			{
+				fv = cw.visitField(0, varName, "Ljava/util/ArrayList;", listType, null);
+				fv.visitEnd();
+			}
 		}
+		
 		return null;
 	}
 	
@@ -359,8 +366,7 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 		for (Expression e : listExpression.expressionList) {
 			e.visit(this, arg);
 		}
-		throw new UnsupportedOperationException(
-				"code generation not yet implemented");
+		return null;
 	}
 
 	@Override
@@ -374,9 +380,7 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 
 	@Override
 	public Object visitListType(ListType listType, Object arg) throws Exception {
-		listType.type.visit(this, arg);
-		throw new UnsupportedOperationException(
-				"code generation not yet implemented");
+		return listType.type.visit(this, arg);
 	}
 
 	@Override
@@ -387,6 +391,27 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 		}
 		throw new UnsupportedOperationException(
 				"code generation not yet implemented");
+	}
+	
+	@Override
+	public Object visitSizeExpression(SizeExpression sizeExpression, Object arg)
+			throws Exception {
+		MethodVisitor mv = ((InheritedAttributes) arg).mv;
+		sizeExpression.expression.visit(this, arg);		
+		IdentExpression ie = (IdentExpression) sizeExpression.expression;
+		if (!(sizeExpression.expression instanceof IdentExpression)) {
+			throw new UnsupportedOperationException("size can only be invoked on list and map variable");
+		}
+		String varName = ie.identToken.getText();
+		String varType = ie.getType();
+		if (varType.substring(0, varType.indexOf("<")).equals("Ljava/util/List")) {
+			mv.visitFieldInsn(GETFIELD, className, varName, "Ljava/util/ArrayList;");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/ArrayList", "size", "()I", false);
+			mv.visitInsn(POP);
+		} else {
+			throw new UnsupportedOperationException("Map size not support yet");
+		}
+		return null;
 	}
 
 	@Override
@@ -502,14 +527,6 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 	public Object visitSimpleType(SimpleType simpleType, Object arg)
 			throws Exception {
 		return simpleType.getJVMType();
-	}
-
-	@Override
-	public Object visitSizeExpression(SizeExpression sizeExpression, Object arg)
-			throws Exception {
-		sizeExpression.expression.visit(this, arg);
-		throw new UnsupportedOperationException(
-				"code generation not yet implemented");
 	}
 
 	@Override

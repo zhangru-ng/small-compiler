@@ -1,7 +1,10 @@
 package cop5555sp15.ast;
 
+import java.lang.annotation.ElementType;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.lang.model.element.Element;
 
 import cop5555sp15.TokenStream.Kind;
 import cop5555sp15.TypeConstants;
@@ -15,7 +18,7 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		ASTNode node;
 
 		public TypeCheckException(String message, ASTNode node) {
-			super(node.firstToken.lineNumber + ":" + message);
+			super(node.firstToken.getText() + " " + node.firstToken.lineNumber + ":" + message);
 			this.node = node;
 		}
 	}
@@ -42,7 +45,19 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			throws Exception {
 		String lvType = (String) assignmentStatement.lvalue.visit(this, arg);
 		String exprType = (String) assignmentStatement.expression.visit(this, arg);
-		check(lvType.equals(exprType), "uncompatible assignment scopes", assignmentStatement);
+		if(lvType == intType || lvType == booleanType || lvType == stringType) {
+			check(lvType.equals(exprType), "uncompatible assignment type", assignmentStatement);
+		} else if (lvType.substring(0, lvType.indexOf("<")).equals("Ljava/util/List")) {
+			if (exprType == emptyList) {
+				return null;
+			} else {
+				String elementType = lvType.substring(lvType.indexOf("<") + 1, lvType.indexOf(">"));
+				String listType = "Ljava/util/ArrayList<" + elementType + ">;";
+				check(exprType.equals(listType), "uncompatible assignment type", assignmentStatement);
+			}			
+		} else {//if (lvType.substring(0, lvType.indexOf("<")).equals("Ljava/util/Map$Entry")){
+			throw new UnsupportedOperationException("Map is not support yet");
+		}		
 		return null;		
 	}
 
@@ -156,7 +171,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 //		closure.setJVMType(JVMType);
 		closure.setArgTypes(argTypes);
 //		closure.setResultType(resultType);
-		return resultType;
+//		return resultType;
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	/**
@@ -169,7 +185,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		String ident = closureDec.identToken.getText();
 		check(symbolTable.insert(ident, closureDec) == true, "redeclared Clousere", closureDec);
 		closureDec.closure.visit(this, arg);
-		return null;
+//		return null;
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	/**
@@ -181,8 +198,9 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			ClosureEvalExpression closureEvalExpression, Object arg)
 			throws Exception {
 		String ident = closureEvalExpression.identToken.getText();
-		check(symbolTable.insert(ident, null) == false, "redeclare ClosureEval", closureEvalExpression);
 		Declaration dec = symbolTable.lookup(ident);
+		check(dec != null, "redeclare ClosureEval", closureEvalExpression);
+//		Declaration dec = symbolTable.lookup(ident);
 		if (dec instanceof ClosureDec) {
 			for (Expression expr : closureEvalExpression.expressionList) {
 				expr.visit(this, arg);
@@ -190,22 +208,25 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		} else {
 			throw new TypeCheckException(ident + " is not defined as a closure", closureEvalExpression);
 		}		
-		return null;
+//		return null;
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	@Override
 	public Object visitClosureExpression(ClosureExpression closureExpression,
 			Object arg) throws Exception {
 		String closureReturnType = (String) closureExpression.closure.visit(this, arg);	
-		return closureReturnType;
+//		return closureReturnType;
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	@Override
 	public Object visitExpressionLValue(ExpressionLValue expressionLValue,
 			Object arg) throws Exception {
 		String ident = expressionLValue.identToken.getText();
-		check(symbolTable.insert(ident, null) == false, "redeclare ExpressionLValue", expressionLValue);
 		Declaration dec = symbolTable.lookup(ident);
+		check(dec != null, "redeclare ExpressionLValue", expressionLValue);
+//		Declaration dec = symbolTable.lookup(ident);
 		if (dec instanceof VarDec) {
 			VarDec vd = (VarDec) dec;
 			String lvType = (String) vd.type.visit(this, arg);
@@ -234,8 +255,9 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	public Object visitIdentExpression(IdentExpression identExpression,
 			Object arg) throws Exception {
 		String ident = identExpression.identToken.getText();
-		check(symbolTable.insert(ident, null) == false, "undeclare IdentExpression", identExpression);
 		Declaration dec = symbolTable.lookup(ident);
+		check(dec != null, "undeclare IdentExpression", identExpression);
+//		Declaration dec = symbolTable.lookup(ident);
 		if (dec instanceof VarDec) {
 			VarDec vd = (VarDec) dec;
 			String identType = (String) vd.type.visit(this, arg);
@@ -250,8 +272,9 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	public Object visitIdentLValue(IdentLValue identLValue, Object arg)
 			throws Exception {
 		String ident = identLValue.identToken.getText();
-		check(symbolTable.insert(ident, null) == false, "undeclare IdentExpression", identLValue);
 		Declaration dec = symbolTable.lookup(ident);
+		check(dec != null, "undeclare IdentExpression", identLValue);
+//		Declaration dec = symbolTable.lookup(ident);
 		if (dec instanceof VarDec) {
 			VarDec vd = (VarDec)dec;
 			String lvType = (String) vd.type.visit(this, arg);
@@ -305,8 +328,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	@Override
 	public Object visitKeyValueExpression(
 			KeyValueExpression keyValueExpression, Object arg) throws Exception {
-		String keyType = (String) keyValueExpression.key.visit(this, arg);
-		String valueTyoe = (String) keyValueExpression.value.visit(this, arg);
+	//	String keyType = (String) keyValueExpression.key.visit(this, arg);
+	//	String valueTyoe = (String) keyValueExpression.value.visit(this, arg);
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 
@@ -315,7 +338,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			throws Exception {
 		keyValueType.keyType.visit(this, arg);
 		keyValueType.valueType.visit(this, arg);
-		return keyValueType.getJVMType();
+//		return keyValueType.getJVMType();
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	// visit the expressions (children) and ensure they are the same type
@@ -326,16 +350,26 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	@Override
 	public Object visitListExpression(ListExpression listExpression, Object arg)
 			throws Exception {
-		if (listExpression.expressionList.isEmpty()) {			
+		if (listExpression.expressionList.isEmpty()) {	
+			listExpression.setType(emptyList);
 			return emptyList;
-		}
+		}		
 		String oldListType = (String) listExpression.expressionList.get(0).visit(this, arg);
 		for(Expression expr : listExpression.expressionList) {
 			String listType = (String) expr.visit(this, arg);
 			check(oldListType.equals(listType),	"uncompatible list type", listExpression);
 			oldListType = listType;			
 		}
-		return oldListType;
+//		if (oldListType == intType) {
+//			oldListType = "Ljava/lang/Integer;";
+//		} else if (oldListType == booleanType) {
+//			oldListType = "Ljava/lang/Boolean;";				
+//		} else if (oldListType == stringType) {
+//			oldListType = "Ljava/lang/String;";				
+//		}
+		String listType = "Ljava/util/ArrayList<" + oldListType + ">;";
+		listExpression.setType(listType);
+		return listType;
 	}
 
 	/** gets the type from the enclosed expression */
@@ -344,19 +378,21 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			ListOrMapElemExpression listOrMapElemExpression, Object arg)
 			throws Exception {
 		String ident = listOrMapElemExpression.identToken.getText();
-		check(symbolTable.insert(ident, null) == false, "undeclare MapElemExpression", listOrMapElemExpression);
 		Declaration dec = symbolTable.lookup(ident);
+		check(dec != null, "undeclare MapElemExpression", listOrMapElemExpression);
+//		Declaration dec = symbolTable.lookup(ident);
 		if (!(dec instanceof VarDec)) {			
 			throw new TypeCheckException(ident + " is not defined as a variable", listOrMapElemExpression);
 		}	
 		String lomrExprType = (String) listOrMapElemExpression.expression.visit(this, arg);
-		return lomrExprType;
+//		return lomrExprType;
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	@Override
 	public Object visitListType(ListType listType, Object arg) throws Exception {
 		listType.type.visit(this, arg);
-		return listType.getJVMType();		
+		return listType.getJVMType();	
 	}
 
 	@Override
@@ -371,7 +407,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			check(oldMapListType.equals(mapListType),	"uncompatible list type", mapListExpression);
 			oldMapListType = mapListType;		
 		}
-		return oldMapListType;
+//		return oldMapListType;
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	@Override
@@ -399,8 +436,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 
 	@Override
 	public Object visitQualifiedName(QualifiedName qualifiedName, Object arg) {
-		assert false;
-		return null;
+//		return null;
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	/**
@@ -422,7 +459,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	@Override
 	public Object visitReturnStatement(ReturnStatement returnStatement,
 			Object arg) throws Exception {
-		return returnStatement.expression.visit(this, arg);
+//		return returnStatement.expression.visit(this, arg);
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	@Override
@@ -434,7 +472,13 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	@Override
 	public Object visitSizeExpression(SizeExpression sizeExpression, Object arg)
 			throws Exception {
-		return sizeExpression.expression.visit(this, arg);		
+		String exprType = (String) sizeExpression.expression.visit(this, arg);		
+		if (exprType.substring(0, exprType.indexOf("<")).equals("Ljava/util/List")) {
+			sizeExpression.setType(intType);
+			return intType;
+		} else {
+			throw new TypeCheckException("size is undefined for " + exprType, sizeExpression);
+		}		
 	}
 
 	@Override
@@ -463,6 +507,7 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		} else {			
 			throw new TypeCheckException("uncompatible unary expression", unaryExpression);
 		}		
+		unaryExpression.setType(exprType);
 		return exprType;
 	}
 
@@ -476,7 +521,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	@Override
 	public Object visitValueExpression(ValueExpression valueExpression,
 			Object arg) throws Exception {
-		return valueExpression.expression.visit(this, arg);
+//		return valueExpression.expression.visit(this, arg);
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	/**
@@ -514,6 +560,8 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	public Object visitWhileStatement(WhileStatement whileStatement, Object arg)
 			throws Exception {
 		whileStatement.expression.visit(this, arg);
+		String condType = (String) whileStatement.expression.visit(this, arg);
+		check(condType.equals(booleanType), "uncompatible If condition", whileStatement);
 		whileStatement.block.visit(this, arg);
 		return null;
 	}

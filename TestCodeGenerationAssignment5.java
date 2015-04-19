@@ -11,13 +11,11 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
-import java.util.List;
 
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.util.TraceClassVisitor;
 
-import cop5555sp15.Parser.SyntaxException;
 import cop5555sp15.ast.ASTNode;
 import cop5555sp15.ast.CodeGenVisitor;
 import cop5555sp15.ast.Program;
@@ -44,22 +42,17 @@ public class TestCodeGenerationAssignment5 {
     cr.accept(new TraceClassVisitor(new PrintWriter(System.out)), flags);
 }
 	
-	private ASTNode parseCorrectInput(String input) throws SyntaxException {
+	private ASTNode parseCorrectInput(String input) {
 		TokenStream stream = new TokenStream(input);
 		Scanner scanner = new Scanner(stream);
 		scanner.scan();
 		Parser parser = new Parser(stream);
 		System.out.println();
 		ASTNode ast = parser.parse();
-		assertNotNull(ast);
-		List<SyntaxException> exceptions = parser.getExceptionList();
-		for(SyntaxException e: exceptions){
-			System.out.println(e.getMessage());
+		if (ast == null) {
+			System.out.println("errors " + parser.getErrors());
 		}
-//		if (ast == null) {
-//			System.out.println("errors " + parser.getErrors());
-//		}
-//		assertNotNull(ast);
+		assertNotNull(ast);
 		return ast;
 	}
 
@@ -467,7 +460,7 @@ public class TestCodeGenerationAssignment5 {
  */
 public void list1() throws Exception{
 	System.out.println("***********list1");
-	String input = "class B {\ndef l1 : @[int];\n  l1 = @[]; print size(l1); \n}";
+	String input = "class B {\ndef l1 : @[int]; \n  l1 = @[];  print  size(l1); \n}";
 	System.out.println(input);
 	Program program = (Program) parseCorrectInput(input);
 	assertNotNull(program);
@@ -482,7 +475,7 @@ public void list1() throws Exception{
 
 /**
  * This is the same as above, except that the list is nonempty.
- * During type checking, we must ensure that the types of the items in this ListExpression
+ * During type checking, we must ensure that the types of the items int this ListExpression
  * are all the same as the declared element type of the list.
  * 
  * output:
@@ -555,13 +548,12 @@ public void list4() throws Exception{
 @Test
 public void list5() throws Exception{
 	System.out.println("***********list5");
-	String input = "class B {\ndef ll1 : @[@[int]];\n }";
-//			+ "  def l1 : @[int]; def l2 : @[int];"
-//			+ "def l3: @[int];" 
-//			+ "\n l1 = @[1,2,3];  " 
-//			+ "l2 = @[4,5,6]; l3=@[];\n  ll1 = @[l1,l2,l3];" 
-//			+ "l3 = ll1[1]; \n   print l3[2];"
-//			+ "\n}";
+	String input = "class B {\ndef ll1 : @[@[int]];\n   def l1 : @[int]; def l2 : @[int];"
+			+ "def l3: @[int];" 
+			+ "\n l1 = @[1,2,3];  " 
+			+ "l2 = @[4,5,6]; l3=@[];\n  ll1 = @[l1,l2,l3];" 
+			+ "l3 = ll1[1]; \n   print l3[2];"
+			+ "\n}";
 	System.out.println(input);
 	Program program = (Program) parseCorrectInput(input);
 	assertNotNull(program);

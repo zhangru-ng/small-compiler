@@ -2,16 +2,21 @@ package cop5555sp15;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
+
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import cop5555sp15.Parser.SyntaxException;
+import cop5555sp15.TokenStream.Kind;
 import cop5555sp15.ast.ASTNode;
-
+import static cop5555sp15.TokenStream.Kind.*;
 
 public class TestParser {
 
 	
-	private ASTNode parseCorrectInput(String input) throws SyntaxException {
+	private ASTNode parseCorrectInput(String input) {
 		TokenStream stream = new TokenStream(input);
 		Scanner scanner = new Scanner(stream);
 		scanner.scan();
@@ -21,6 +26,7 @@ public class TestParser {
 		assertNotNull(ast);
 		return ast;
 	}	
+
 
 	@Test
 	public void smallest() throws SyntaxException {

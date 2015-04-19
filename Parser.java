@@ -48,6 +48,14 @@ public class Parser {
 		}
 	}
 	
+	public String getErrors() {
+		StringBuilder sb = new StringBuilder();
+		for(SyntaxException e: exceptionList){
+			sb.append(e.getMessage() + "\n");
+		}
+		return sb.toString();
+	}
+	
 	//the token which is parsed currently
 	private Token t;	 
 
@@ -116,7 +124,7 @@ public class Parser {
 		return exceptionList;
 	}
 	
-	public Program parse() throws SyntaxException {
+	public Program parse() {
 		Program p = null;
 		try{
 			p = program();
@@ -756,19 +764,4 @@ public class Parser {
 		}
 		return e;
 	}
-	
-	public static void main(String[] args) throws SyntaxException {
-		TokenStream stream = new TokenStream(" class s{ def a; }    ");
-		Scanner scanner = new Scanner(stream);
-		scanner.scan();
-		Parser parser = new Parser(stream);
-		System.out.println();
-		ASTNode ast = parser.parse();
-		System.out.println(ast);
-		List<SyntaxException> exceptions = parser.getExceptionList();
-		for(SyntaxException e: exceptions){
-			System.out.println(e.getMessage());
-		}
-	}
-
 }

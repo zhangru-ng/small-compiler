@@ -47,15 +47,7 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 			if (varType == emptyList) {
 				listType = "Ljava/util/List;";
 			} else {
-				String elementType = varType.substring(varType.indexOf("<") + 1, varType.indexOf(">"));
-				if (elementType.equals(intType)) {
-					elementType = "Ljava/lang/Integer;";
-				} else if (elementType.equals(booleanType)) {
-					elementType = "Ljava/lang/Boolean;";				
-				} else if (elementType.equals(stringType)) {
-					elementType = "Ljava/lang/String;";				
-				}
-				listType = "Ljava/util/List<" + elementType + ">;";
+				listType = getElementType(varType);
 			}			
 			{
 				fv = cw.visitField(0, varName, "Ljava/util/List;", listType, null);
@@ -64,6 +56,21 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 		}
 		
 		return null;
+	}
+	
+	private String getElementType(String elementType) {
+		if (elementType.equals(intType)) {
+			return "Ljava/lang/Integer;";
+		} else if (elementType.equals(booleanType)) {
+			return "Ljava/lang/Boolean;";	
+		} else if (elementType.equals(stringType)) {
+			return "Ljava/lang/String;";		
+		} else if (elementType.substring(0, elementType.indexOf("<")).equals("Ljava/util/List")){
+			String innerType = elementType.substring(elementType.indexOf("<") + 1, elementType.lastIndexOf(">"));
+			return "Ljava/util/List<" + getElementType(innerType) + ">;";
+		} else {
+			throw new UnsupportedOperationException("code generation not yet implemented");
+		}
 	}
 	
 	@Override
@@ -82,7 +89,7 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 					mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
 				} else if(varType.equals(stringType)) {
 					// nothing to do
-				}
+				} 
 				mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(ILjava/lang/Object;)V", true);
 			} else if (assignmentStatement.lvalue instanceof IdentLValue){
 				mv.visitVarInsn(ALOAD, 0);
@@ -96,7 +103,13 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 			mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V", false);
 			mv.visitFieldInsn(PUTFIELD, className, varName, "Ljava/util/List;");
 			((InheritedAttributes) arg).listName = varName;	
-			assignmentStatement.expression.visit(this, arg);	
+			if(assignmentStatement.expression instanceof ListOrMapElemExpression) {
+				mv.visitVarInsn(ALOAD, 0);
+				assignmentStatement.expression.visit(this, arg);
+				mv.visitFieldInsn(PUTFIELD, className, varName, "Ljava/util/List;");
+			} else {
+				assignmentStatement.expression.visit(this, arg);
+			}
 		}
 		return null;			
 	}	
@@ -525,11 +538,14 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 	public Object visitWhileStatement(WhileStatement whileStatement, Object arg)
 			throws Exception {
 		MethodVisitor mv = ((InheritedAttributes) arg).mv;
-		Label l1 = new Label();
-		whileStatement.expression.visit(this, arg);
-		mv.visitJumpInsn(IFEQ, l1);
-		whileStatement.block.visit(this, arg);		
-		mv.visitLabel(l1);		
+		Label l1 = new Label();		
+		mv.visitLabel(l1);
+		whileStatement.expression.visit(this, arg);		
+		Label l2 = new Label();	
+		mv.visitJumpInsn(IFEQ, l2);			
+		whileStatement.block.visit(this, arg);	
+		mv.visitJumpInsn(GOTO, l1);
+		mv.visitLabel(l2);		
 		return null;
 	}
 
@@ -577,7 +593,7 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 			} else if (elementType.equals(stringType)) {
 				// nothing to do
 			} else if (elementType.substring(0, elementType.indexOf("<")).equals("Ljava/util/List")) {
-				
+//				mv.visitVarInsn(ALOAD, 1);
 			}
 			mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true);
 			mv.visitInsn(POP);
@@ -606,14 +622,13 @@ public class CodeGenVisitor implements ASTVisitor, Opcodes, TypeConstants {
 			mv.visitTypeInsn(CHECKCAST, "java/lang/String");
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "toString", "()Ljava/lang/String;", false);
 		} else if (elementType.substring(0, elementType.indexOf("<")).equals("Ljava/util/List")) {
-			
+			mv.visitTypeInsn(CHECKCAST, "java/util/List");
 		}		
 		return null;
 	}
 
 	@Override
 	public Object visitListType(ListType listType, Object arg) throws Exception {
-		String s = listType.getJVMType();
 		return listType.getJVMType();
 	}
 

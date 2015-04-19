@@ -48,11 +48,13 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		if(lvType.equals(intType) || lvType.equals(booleanType) || lvType.equals(stringType)) {
 			check(lvType.equals(exprType), "uncompatible assignment type", assignmentStatement);
 		} else if (lvType.substring(0, lvType.indexOf("<")).equals("Ljava/util/List")) {
-			if (!exprType.equals(emptyList)) {
-				String elementType = lvType.substring(lvType.indexOf("<") + 1, lvType.indexOf(">"));
+			if (exprType.substring(0, lvType.indexOf("<")).equals("Ljava/util/List")) {
+				check(exprType.equals(lvType), "uncompatible assignment type", assignmentStatement);
+			} else if (!exprType.equals(emptyList)) {
+				String elementType = lvType.substring(lvType.indexOf("<") + 1, lvType.lastIndexOf(">"));
 				String listType = "Ljava/util/ArrayList<" + elementType + ">;";
 				check(exprType.equals(listType), "uncompatible assignment type", assignmentStatement);
-			}			
+			}
 		} else {//if (lvType.substring(0, lvType.indexOf("<")).equals("Ljava/util/Map$Entry")){
 			throw new UnsupportedOperationException("Map is not support yet");
 		}		
@@ -232,7 +234,7 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			if (varType.substring(0, varType.indexOf("<")).equals("Ljava/util/List")) {
 				String exprType = (String) expressionLValue.expression.visit(this, arg);
 				check(exprType.equals(intType), "List subscript must be int", expressionLValue);
-				String elementType = varType.substring(varType.indexOf("<") + 1, varType.indexOf(">"));
+				String elementType = varType.substring(varType.indexOf("<") + 1, varType.lastIndexOf(">"));
 				expressionLValue.setType(elementType);
 				return elementType;
 			} else {
@@ -383,7 +385,7 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		if (varType.substring(0, varType.indexOf("<")).equals("Ljava/util/List")) {
 			String lomrExprType = (String) listOrMapElemExpression.expression.visit(this, arg);
 			check(lomrExprType.equals(intType), "List subscript must be int", listOrMapElemExpression);
-			String elementType = varType.substring(varType.indexOf("<") + 1, varType.indexOf(">"));
+			String elementType = varType.substring(varType.indexOf("<") + 1, varType.lastIndexOf(">"));
 			listOrMapElemExpression.setType(elementType);
 			return elementType;
 		} else {

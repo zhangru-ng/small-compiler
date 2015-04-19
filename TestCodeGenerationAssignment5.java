@@ -467,7 +467,7 @@ public class TestCodeGenerationAssignment5 {
  */
 public void list1() throws Exception{
 	System.out.println("***********list1");
-	String input = "class B {\ndef l1 : @[int]; \n  l1 = @[];  print  size(l1); \n}";
+	String input = "class B {\ndef l1 : @[int];\n  l1 = @[]; print size(l1); \n}";
 	System.out.println(input);
 	Program program = (Program) parseCorrectInput(input);
 	assertNotNull(program);
@@ -555,12 +555,13 @@ public void list4() throws Exception{
 @Test
 public void list5() throws Exception{
 	System.out.println("***********list5");
-	String input = "class B {\ndef ll1 : @[@[int]];\n   def l1 : @[int]; def l2 : @[int];"
-			+ "def l3: @[int];" 
-			+ "\n l1 = @[1,2,3];  " 
-			+ "l2 = @[4,5,6]; l3=@[];\n  ll1 = @[l1,l2,l3];" 
-			+ "l3 = ll1[1]; \n   print l3[2];"
-			+ "\n}";
+	String input = "class B {\ndef ll1 : @[@[int]];\n }";
+//			+ "  def l1 : @[int]; def l2 : @[int];"
+//			+ "def l3: @[int];" 
+//			+ "\n l1 = @[1,2,3];  " 
+//			+ "l2 = @[4,5,6]; l3=@[];\n  ll1 = @[l1,l2,l3];" 
+//			+ "l3 = ll1[1]; \n   print l3[2];"
+//			+ "\n}";
 	System.out.println(input);
 	Program program = (Program) parseCorrectInput(input);
 	assertNotNull(program);

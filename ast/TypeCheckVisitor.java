@@ -45,12 +45,10 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			throws Exception {
 		String lvType = (String) assignmentStatement.lvalue.visit(this, arg);
 		String exprType = (String) assignmentStatement.expression.visit(this, arg);
-		if(lvType == intType || lvType == booleanType || lvType == stringType) {
+		if(lvType.equals(intType) || lvType.equals(booleanType) || lvType.equals(stringType)) {
 			check(lvType.equals(exprType), "uncompatible assignment type", assignmentStatement);
 		} else if (lvType.substring(0, lvType.indexOf("<")).equals("Ljava/util/List")) {
-			if (exprType == emptyList) {
-				return null;
-			} else {
+			if (!exprType.equals(emptyList)) {
 				String elementType = lvType.substring(lvType.indexOf("<") + 1, lvType.indexOf(">"));
 				String listType = "Ljava/util/ArrayList<" + elementType + ">;";
 				check(exprType.equals(listType), "uncompatible assignment type", assignmentStatement);
@@ -83,14 +81,14 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			check(expr0Type.equals(intType), "operator " + op.toString() + " is not defined for " + expr0Type, binaryExpression);
 			break;
 		case EQUAL:	case NOTEQUAL:
-			if (expr0Type == booleanType || expr0Type == intType ||expr0Type == stringType) {
+			if (expr0Type.equals(booleanType) || expr0Type.equals(intType) ||expr0Type.equals(stringType)) {
 				binaryExpression.setType(booleanType);
 				return booleanType;
 			} else {
 				throw new TypeCheckException("operator " + op.toString() + " is not defined for " + expr0Type, binaryExpression);
 			}	
 		case LT: case GT: case LE: case GE:
-			if (expr0Type == booleanType || expr0Type == intType) {
+			if (expr0Type.equals(booleanType) || expr0Type.equals(intType)) {
 				binaryExpression.setType(booleanType);
 				return booleanType;
 			} else {
@@ -227,15 +225,20 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		Declaration dec = symbolTable.lookup(ident);
 		check(dec != null, "redeclare ExpressionLValue", expressionLValue);
 //		Declaration dec = symbolTable.lookup(ident);
-		if (dec instanceof VarDec) {
-			VarDec vd = (VarDec) dec;
-			String lvType = (String) vd.type.visit(this, arg);
-			String exprType = (String) expressionLValue.expression.visit(this, arg);
-			check(lvType == exprType, "Incompatible operand types in ExpressionLValue", expressionLValue);
-			return lvType;
-		} else {
+		if (!(dec instanceof VarDec)) {
 			throw new TypeCheckException(ident + " is not defined as a variable", expressionLValue);
-		}		
+		} else {
+			String varType = (String) ((VarDec)dec).type.visit(this, arg);			
+			if (varType.substring(0, varType.indexOf("<")).equals("Ljava/util/List")) {
+				String exprType = (String) expressionLValue.expression.visit(this, arg);
+				check(exprType.equals(intType), "List subscript must be int", expressionLValue);
+				String elementType = varType.substring(varType.indexOf("<") + 1, varType.indexOf(">"));
+				expressionLValue.setType(elementType);
+				return elementType;
+			} else {
+				throw new UnsupportedOperationException("map not yet implemented");
+			}
+		}
 	}
 
 	@Override
@@ -360,13 +363,6 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 			check(oldListType.equals(listType),	"uncompatible list type", listExpression);
 			oldListType = listType;			
 		}
-//		if (oldListType == intType) {
-//			oldListType = "Ljava/lang/Integer;";
-//		} else if (oldListType == booleanType) {
-//			oldListType = "Ljava/lang/Boolean;";				
-//		} else if (oldListType == stringType) {
-//			oldListType = "Ljava/lang/String;";				
-//		}
 		String listType = "Ljava/util/ArrayList<" + oldListType + ">;";
 		listExpression.setType(listType);
 		return listType;
@@ -380,13 +376,19 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 		String ident = listOrMapElemExpression.identToken.getText();
 		Declaration dec = symbolTable.lookup(ident);
 		check(dec != null, "undeclare MapElemExpression", listOrMapElemExpression);
-//		Declaration dec = symbolTable.lookup(ident);
 		if (!(dec instanceof VarDec)) {			
 			throw new TypeCheckException(ident + " is not defined as a variable", listOrMapElemExpression);
 		}	
-		String lomrExprType = (String) listOrMapElemExpression.expression.visit(this, arg);
-//		return lomrExprType;
-		throw new UnsupportedOperationException("not yet implemented");
+		String varType = (String) ((VarDec)dec).type.visit(this, arg);
+		if (varType.substring(0, varType.indexOf("<")).equals("Ljava/util/List")) {
+			String lomrExprType = (String) listOrMapElemExpression.expression.visit(this, arg);
+			check(lomrExprType.equals(intType), "List subscript must be int", listOrMapElemExpression);
+			String elementType = varType.substring(varType.indexOf("<") + 1, varType.indexOf(">"));
+			listOrMapElemExpression.setType(elementType);
+			return elementType;
+		} else {
+			throw new UnsupportedOperationException("not yet implemented");
+		}
 	}
 
 	@Override

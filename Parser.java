@@ -704,12 +704,12 @@ public class Parser {
 		case NOT:
 			op = t;
 			consume();
-			e = new UnaryExpression(first, op,	expression());
+			e = new UnaryExpression(first, op,	factor());
 			break;
 		case MINUS:
 			op = t;
 			consume();
-			e = new UnaryExpression(first, op,	expression());
+			e = new UnaryExpression(first, op,	factor());
 			break;
 		case KW_SIZE:
 			consume();

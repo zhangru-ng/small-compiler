@@ -6,7 +6,6 @@ import org.junit.Test;
 
 import cop5555sp15.ast.Declaration;
 import cop5555sp15.ast.DummyDec;
-import cop5555sp15.ast.VarDec;
 
 public class TestSymbolTable {
 

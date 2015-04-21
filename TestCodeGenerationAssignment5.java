@@ -3,15 +3,8 @@ package cop5555sp15;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import java.io.File;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Arrays;
-
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.util.TraceClassVisitor;
@@ -35,12 +28,12 @@ public class TestCodeGenerationAssignment5 {
         }
     };    
 
- public void dumpBytecode(byte[] bytecode){   
-    int flags = ClassReader.SKIP_DEBUG;
-    ClassReader cr;
-    cr = new ClassReader(bytecode); 
-    cr.accept(new TraceClassVisitor(new PrintWriter(System.out)), flags);
-}
+	 public void dumpBytecode(byte[] bytecode){   
+	    int flags = ClassReader.SKIP_DEBUG;
+	    ClassReader cr;
+	    cr = new ClassReader(bytecode); 
+	    cr.accept(new TraceClassVisitor(new PrintWriter(System.out)), flags);
+	}
 	
 	private ASTNode parseCorrectInput(String input) {
 		TokenStream stream = new TokenStream(input);

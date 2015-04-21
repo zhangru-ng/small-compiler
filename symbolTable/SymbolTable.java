@@ -4,10 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
-
 import cop5555sp15.ast.Declaration;
-import cop5555sp15.symbolTable.SymbolTable.SymbolTableEntry;
 
 public class SymbolTable {
 	

@@ -1,12 +1,9 @@
 package cop5555sp15;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.io.PrintWriter;
-import java.util.List;
-
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.util.TraceClassVisitor;
@@ -31,12 +28,12 @@ public class Assignment4Tests {
         }
     };
 
- public void dumpBytecode(byte[] bytecode){   
-    int flags = ClassReader.SKIP_DEBUG;
-    ClassReader cr;
-    cr = new ClassReader(bytecode); 
-    cr.accept(new TraceClassVisitor(new PrintWriter(System.out)), flags);
-}
+	 public void dumpBytecode(byte[] bytecode){   
+	    int flags = ClassReader.SKIP_DEBUG;
+	    ClassReader cr;
+	    cr = new ClassReader(bytecode); 
+	    cr.accept(new TraceClassVisitor(new PrintWriter(System.out)), flags);
+	}
 	
 	private ASTNode parseCorrectInput(String input) throws SyntaxException {
 		TokenStream stream = new TokenStream(input);

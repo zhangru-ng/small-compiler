@@ -1,11 +1,5 @@
 package cop5555sp15.ast;
 
-import java.lang.annotation.ElementType;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.lang.model.element.Element;
-
 import cop5555sp15.TokenStream.Kind;
 import cop5555sp15.TypeConstants;
 import cop5555sp15.symbolTable.SymbolTable;
@@ -154,22 +148,22 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	 */
 	@Override
 	public Object visitClosure(Closure closure, Object arg) throws Exception {
-		List<String> argTypes = new ArrayList<String>();
-		String resultType = null;
-		int numScopes = symbolTable.enterScope();
-		// visit children
-		for (VarDec vd : closure.formalArgList) {
-			String vdType = (String) vd.visit(this, arg);
-			argTypes.add(vdType);
-		}
-		for (Statement s : closure.statementList) {
-			s.visit(this, arg);
-		}
-		int numScopesExit = symbolTable.leaveScope();
-		check(numScopesExit > 0 && numScopesExit == numScopes,
-				"unbalanced scopes", closure);
+//		List<String> argTypes = new ArrayList<String>();
+//		String resultType = null;
+//		int numScopes = symbolTable.enterScope();
+////		 visit children
+//		for (VarDec vd : closure.formalArgList) {
+//			String vdType = (String) vd.visit(this, arg);
+//			argTypes.add(vdType);
+//		}
+//		for (Statement s : closure.statementList) {
+//			s.visit(this, arg);
+//		}
+//		int numScopesExit = symbolTable.leaveScope();
+//		check(numScopesExit > 0 && numScopesExit == numScopes,
+//				"unbalanced scopes", closure);
 //		closure.setJVMType(JVMType);
-		closure.setArgTypes(argTypes);
+//		closure.setArgTypes(argTypes);
 //		closure.setResultType(resultType);
 //		return resultType;
 		throw new UnsupportedOperationException("not yet implemented");
@@ -215,7 +209,7 @@ public class TypeCheckVisitor implements ASTVisitor, TypeConstants {
 	@Override
 	public Object visitClosureExpression(ClosureExpression closureExpression,
 			Object arg) throws Exception {
-		String closureReturnType = (String) closureExpression.closure.visit(this, arg);	
+//		String closureReturnType = (String) closureExpression.closure.visit(this, arg);	
 //		return closureReturnType;
 		throw new UnsupportedOperationException("not yet implemented");
 	}

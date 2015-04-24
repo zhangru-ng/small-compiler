@@ -5,12 +5,8 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.util.List;
-
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.util.TraceClassVisitor;
 
 import cop5555sp15.TestCodeGenerationAssignment5.DynamicClassLoader;
 import cop5555sp15.ast.ASTNode;
@@ -25,7 +21,6 @@ public class CodeletBuilder {
 		ASTNode ast = parseInput(source);
 		checkType(ast);
     	byte[] bytecode = generateByteCode(ast);
-		dumpBytecode(bytecode);
 		DynamicClassLoader loader = new DynamicClassLoader(Thread.currentThread().getContextClassLoader());
 	    Class<?> testClass = loader.define( ((Program)ast).JVMName, bytecode);
 		return (Codelet) testClass.newInstance();
@@ -36,7 +31,6 @@ public class CodeletBuilder {
 		ASTNode ast = parseInput(fr);
 		checkType(ast);
     	byte[] bytecode = generateByteCode(ast);
-		dumpBytecode(bytecode);
 		DynamicClassLoader loader = new DynamicClassLoader(Thread.currentThread().getContextClassLoader());
 	    Class<?> testClass = loader.define( ((Program)ast).JVMName, bytecode);
 		return (Codelet) testClass.newInstance();
@@ -91,17 +85,8 @@ public class CodeletBuilder {
 			System.out.println(e.getMessage());
 			fail("Code generation error");
 		}
-		dumpBytecode(bytecode);
 		return bytecode;
 	}
-	
-	public static void dumpBytecode(byte[] bytecode){   
-	    int flags = ClassReader.SKIP_DEBUG;
-	    ClassReader cr;
-	    cr = new ClassReader(bytecode); 
-	    cr.accept(new TraceClassVisitor(new PrintWriter(System.out)), flags);
-	}	
-
 
 	@SuppressWarnings("rawtypes")
 	public static List getList(Codelet codelet, String name) throws Exception{

@@ -1,8 +1,7 @@
 package cop5555sp15;
 
-
-/** This class illustrates calling execute twice after modifying 
- * int, boolean, string, variables in the codelet, and print 
+/** This class illustrates calling execute twice after modifying
+ * int, boolean, string, variables in the codelet, and print
  * different element in a list
  * The expected output is
 first time
@@ -13,7 +12,7 @@ sencond time
 2
 */
 public class Example1 {
-	
+
 	public static void main(String[] args) throws Exception{
 		String source = "class Example1{\n"
 						+ "def i1: int;\n"
@@ -43,5 +42,5 @@ public class Example1 {
 		CodeletBuilder.setString(codelet, "s1", "sencond time");
 		codelet.execute();
 	}
-	
+
 }

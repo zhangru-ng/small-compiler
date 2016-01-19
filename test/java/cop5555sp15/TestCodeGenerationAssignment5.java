@@ -18,15 +18,15 @@ import cop5555sp15.symbolTable.SymbolTable;
 
 public class TestCodeGenerationAssignment5 {
 	
-    public static class DynamicClassLoader extends ClassLoader {
-        public DynamicClassLoader(ClassLoader parent) {
-            super(parent);
-        }
-
-        public Class<?> define(String className, byte[] bytecode) {
-            return super.defineClass(className, bytecode, 0, bytecode.length);
-        }
-    };    
+        public static class DynamicClassLoader extends ClassLoader {
+            public DynamicClassLoader(ClassLoader parent) {
+                super(parent);
+            }
+    
+            public Class<?> define(String className, byte[] bytecode) {
+                return super.defineClass(className, bytecode, 0, bytecode.length);
+            }
+        };    
 
 	 public void dumpBytecode(byte[] bytecode){   
 	    int flags = ClassReader.SKIP_DEBUG;
